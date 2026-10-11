@@ -1,7 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Agreement_Value__c</fullName>
-    <description>Monetary value of the agreement. Shown in Upcoming Renewals to help prioritize work.</description>
+    <description
+  >Monetary value of the agreement. Shown in Upcoming Renewals to help prioritize work.</description>
     <inlineHelpText>Total value of the agreement.</inlineHelpText>
     <label>Agreement Value</label>
     <precision>18</precision>
