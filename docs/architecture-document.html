@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Upcoming Renewals - Software Architecture Document</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body>
+    <div class="toolbar no-print">
+      <button id="export-pdf" type="button">Export to PDF</button>
+    </div>
+    <div class="watermark" aria-hidden="true"></div>
+
+    <div class="page">
+      <header class="cover">
+        <img class="cover-logo" src="assets/logo.png" alt="Company logo" onerror="this.remove()" />
+        <p class="eyebrow">Salesforce Developer Technical Assessment</p>
+        <h1>Upcoming Renewals</h1>
+        <p class="subtitle">Software Architecture Document</p>
+        <p class="tagline">Architectural views, quality attributes and decision records</p>
+        <dl class="meta">
+          <dt>Version</dt>
+          <dd>0.1 (Draft)</dd>
+          <dt>Last modified</dt>
+          <dd>Oct 11, 2026</dd>
+          <dt>Audience</dt>
+          <dd>Architects &amp; Tech Leads</dd>
+          <dt>Companions</dt>
+          <dd>Functional and Technical Documentation</dd>
+        </dl>
+      </header>
+
+      <section id="version-history">
+        <h2 class="unnumbered">Version History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 90px">Version</th>
+              <th style="width: 150px">Modified by</th>
+              <th style="width: 130px">Last modified</th>
+              <th>What was modified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0.1</td>
+              <td>Enzo Fischer</td>
+              <td>Oct 11, 2026</td>
+              <td>
+                Initial draft: context, logical, process, data, security and deployment views;
+                quality attributes; governor-limit budget; architecture decision records; risks;
+                requirements traceability.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="table-of-contents">
+        <h2 class="unnumbered">Table of Contents</h2>
+        <nav id="toc" aria-label="Table of contents"></nav>
+      </section>
+
+      <main class="page-break">
+        <h2>Introduction</h2>
+        <h3>Purpose</h3>
+        <p>
+          This Software Architecture Document (SAD) describes the architecture of the Upcoming
+          Renewals solution from several viewpoints, and records <strong>why</strong> the main
+          decisions were taken. The Functional Documentation explains what the solution does; the
+          Technical Documentation explains how each piece is built. This document sits above both: it
+          explains how the pieces fit together, which qualities the design protects, and which
+          alternatives were rejected.
+        </p>
+
+        <h3>Scope</h3>
+        <p>
+          The solution lives entirely inside one Salesforce org. It has no external integrations. It
+          covers the Service Agreement data model, the renewal rules, the automatic Renewal Task, the
+          Upcoming Renewals Lightning Web Component, security, testing and the delivery pipeline.
+        </p>
+
+        <h3>Document status</h3>
+        <div class="callout">
+          <p>
+            Decisions in this document are final unless marked otherwise. Components still being
+            implemented are labelled <span class="badge planned">Planned</span> and are reconciled
+            with the final source code before submission.
+          </p>
+        </div>
+
+        <h3>References</h3>
+        <ul>
+          <li>Salesforce Developer Technical Assessment (Solution Heroes Inc, September 2026).</li>
+          <li>Upcoming Renewals - Functional Documentation.</li>
+          <li>Upcoming Renewals - Technical Documentation.</li>
+        </ul>
+
+        <h2>Architectural Goals and Constraints</h2>
+        <h3>Business drivers</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px">ID</th>
+              <th>Requirement from the assessment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>R1</td>
+              <td>An Apex service identifies agreements needing attention: Active, Renewal Required, End Date in the next 30 days.</td>
+            </tr>
+            <tr>
+              <td>R2</td>
+              <td>A trigger creates a Renewal Task for the Account Manager, due 10 days before End Date, never duplicated, bulk-safe.</td>
+            </tr>
+            <tr>
+              <td>R3</td>
+              <td>A Lightning Web Component named Upcoming Renewals lists them and lets users mark renewal work as started.</td>
+            </tr>
+            <tr>
+              <td>R4</td>
+              <td>Calendar-day arithmetic that is correct across month ends, year ends and leap years.</td>
+            </tr>
+            <tr>
+              <td>R5</td>
+              <td>Apex tests for qualifying, non-qualifying, bulk, duplicate, boundary and negative scenarios.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Constraints</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 220px">Constraint</th>
+              <th>Impact on the architecture</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Salesforce governor limits</td>
+              <td>Every path is bulk-first: queries in selectors, one DML per object per transaction, no loops that query or write.</td>
+            </tr>
+            <tr>
+              <td>No custom fields on Task or Event in the target org</td>
+              <td>Verified with dry-run deployments (the same field deploys to Account but not to Task or Event). Duplicate prevention cannot use a unique key on Task and moves to the agreement (ADR-005).</td>
+            </tr>
+            <tr>
+              <td>Single org, Developer Edition</td>
+              <td>No separate sandbox is assumed. Safety comes from check-only deployments and automated tests before every deploy.</td>
+            </tr>
+            <tr>
+              <td>No external dependencies</td>
+              <td>No managed packages or Apex frameworks. Layering is implemented with plain classes (ADR-002).</td>
+            </tr>
+            <tr>
+              <td>Source control is the source of truth</td>
+              <td>All metadata lives in Git. Changes reach the org through the Salesforce CLI from reviewed branches.</td>
+            </tr>
+            <tr>
+              <td>Three-day delivery window</td>
+              <td>Scope is the required behavior plus the quality attributes below. Extras are listed as roadmap items.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Context View</h2>
+        <p>The solution is a self-contained Salesforce application. People interact with it only through Salesforce.</p>
+        <figure class="figure">
+          <svg viewBox="0 0 900 360" role="img" aria-label="System context diagram" width="900">
+            <defs>
+              <marker id="ctx-arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+                <path d="M0,0 L9,4.5 L0,9 z" fill="#1f8fe8" />
+              </marker>
+            </defs>
+            <rect x="235" y="14" width="420" height="332" rx="14" fill="#f7fbff" stroke="#0b3d73" stroke-width="1.5" stroke-dasharray="6 4" />
+            <text x="445" y="38" text-anchor="middle" font-size="13" font-weight="700" fill="#0b3d73">Salesforce org (Developer Edition, API 68.0)</text>
+
+            <!-- actors -->
+            <g font-size="13" font-weight="600" fill="#0f2a47" text-anchor="middle">
+              <rect x="20" y="62" width="170" height="50" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="105" y="86">Account Manager</text>
+              <text x="105" y="102" font-weight="400" font-size="11" fill="#5b6b7c">works the Renewal Tasks</text>
+              <rect x="20" y="136" width="170" height="50" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="105" y="160">Renewal / Sales Ops lead</text>
+              <text x="105" y="176" font-weight="400" font-size="11" fill="#5b6b7c">reviews the renewal list</text>
+              <rect x="20" y="210" width="170" height="50" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="105" y="234">Salesforce administrator</text>
+              <text x="105" y="250" font-weight="400" font-size="11" fill="#5b6b7c">configures and grants access</text>
+            </g>
+            <g stroke="#1f8fe8" stroke-width="1.5" marker-end="url(#ctx-arrow)" fill="none">
+              <line x1="190" y1="87" x2="285" y2="87" />
+              <line x1="190" y1="161" x2="285" y2="115" />
+              <line x1="190" y1="235" x2="285" y2="290" />
+            </g>
+
+            <!-- inside the org -->
+            <g font-size="12.5" font-weight="600" fill="#0f2a47" text-anchor="middle">
+              <rect x="255" y="62" width="170" height="52" rx="8" fill="#0b3d73" />
+              <text x="340" y="86" fill="#fff">Upcoming Renewals</text>
+              <text x="340" y="102" fill="#cfe3f7" font-weight="400" font-size="11">Lightning Web Component</text>
+
+              <rect x="465" y="62" width="170" height="52" rx="8" fill="#0b3d73" />
+              <text x="550" y="86" fill="#fff">Apex</text>
+              <text x="550" y="102" fill="#cfe3f7" font-weight="400" font-size="11">trigger, services, selectors</text>
+
+              <rect x="255" y="170" width="170" height="52" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="340" y="194">Service_Agreement__c</text>
+              <text x="340" y="210" font-weight="400" font-size="11" fill="#5b6b7c">custom object</text>
+
+              <rect x="465" y="170" width="170" height="52" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="550" y="194">Task</text>
+              <text x="550" y="210" font-weight="400" font-size="11" fill="#5b6b7c">standard object</text>
+
+              <rect x="255" y="268" width="170" height="52" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="340" y="292">Account, User</text>
+              <text x="340" y="308" font-weight="400" font-size="11" fill="#5b6b7c">standard objects</text>
+
+              <rect x="465" y="268" width="170" height="52" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="550" y="292">Renewal_Setting__mdt</text>
+              <text x="550" y="308" font-weight="400" font-size="11" fill="#5b6b7c">custom metadata</text>
+            </g>
+            <g stroke="#1f8fe8" stroke-width="1.5" fill="none" marker-end="url(#ctx-arrow)">
+              <line x1="425" y1="88" x2="465" y2="88" />
+              <line x1="550" y1="114" x2="550" y2="170" />
+              <line x1="500" y1="114" x2="400" y2="170" />
+              <line x1="340" y1="222" x2="340" y2="268" />
+              <line x1="550" y1="268" x2="550" y2="225" stroke-dasharray="4 3" />
+            </g>
+
+            <!-- delivery side -->
+            <g font-size="13" font-weight="600" fill="#0f2a47" text-anchor="middle">
+              <rect x="715" y="62" width="165" height="50" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="797" y="92">GitHub repository</text>
+              <rect x="715" y="152" width="165" height="50" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+              <text x="797" y="182">Salesforce CLI</text>
+              <rect x="715" y="262" width="165" height="50" rx="8" fill="#0b3d73" />
+              <text x="797" y="292" fill="#fff">Developer</text>
+            </g>
+            <g stroke="#1f8fe8" stroke-width="1.5" fill="none" marker-end="url(#ctx-arrow)">
+              <line x1="797" y1="262" x2="797" y2="205" />
+              <line x1="715" y1="177" x2="657" y2="177" />
+              <path d="M880 287 H892 V87 H883" />
+            </g>
+            <g font-size="11" fill="#5b6b7c">
+              <text x="803" y="238">validate, deploy</text>
+              <text x="661" y="170">deploy</text>
+              <text x="842" y="52" text-anchor="middle">pull request, merge</text>
+            </g>
+          </svg>
+          <figcaption>Figure 1. System context.</figcaption>
+        </figure>
+
+        <h2>Logical View</h2>
+        <h3>Layers and dependency rules</h3>
+        <p>
+          The back end is organized in layers. Dependencies point downward only, so a lower layer can
+          be tested and changed without knowing who calls it.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 150px">Layer</th>
+              <th style="width: 260px">Members <span class="badge planned">Planned</span></th>
+              <th>Rules</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Entry points</td>
+              <td><code>ServiceAgreementTrigger</code>, <code>UpcomingRenewalsController</code></td>
+              <td>No business logic. Translate the platform context (trigger or Aura call) into a call to a handler or service.</td>
+            </tr>
+            <tr>
+              <td>Handler</td>
+              <td><code>ServiceAgreementTriggerHandler</code></td>
+              <td>Decides what runs per trigger context. Passes whole collections.</td>
+            </tr>
+            <tr>
+              <td>Services</td>
+              <td><code>RenewalTaskService</code>, <code>UpcomingRenewalsService</code></td>
+              <td>Own the use cases and the transaction. The only layer that performs DML.</td>
+            </tr>
+            <tr>
+              <td>Domain</td>
+              <td><code>RenewalEligibility</code></td>
+              <td>Pure business rules. No SOQL, no DML, no static state. Receives all inputs as parameters.</td>
+            </tr>
+            <tr>
+              <td>Support</td>
+              <td><code>RenewalSettings</code>, <code>RenewalClock</code></td>
+              <td>Configuration access and the single source of "today".</td>
+            </tr>
+            <tr>
+              <td>Selectors</td>
+              <td><code>ServiceAgreementSelector</code>, <code>RenewalTaskSelector</code></td>
+              <td>The only place that contains SOQL, always in user mode. Never call services.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Why this shape</h3>
+        <ul>
+          <li><strong>Testability:</strong> the domain layer is tested with plain objects and fixed dates, without the database.</li>
+          <li><strong>Governor-limit control:</strong> because SOQL and DML are confined to selectors and services, the cost of any path can be counted by reading two classes.</li>
+          <li><strong>Replaceability:</strong> the layering matches fflib-style conventions, so a framework can be adopted later without rewriting business rules.</li>
+        </ul>
+
+        <h2>Process View</h2>
+        <h3>Renewal Task creation</h3>
+        <figure class="figure">
+          <svg viewBox="0 0 860 560" role="img" aria-label="Sequence diagram of Renewal Task creation" width="860">
+            <defs>
+              <marker id="seq-arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+                <path d="M0,0 L9,4.5 L0,9 z" fill="#0b3d73" />
+              </marker>
+            </defs>
+            <!-- lifeline heads -->
+            <g font-size="12" font-weight="700" fill="#fff" text-anchor="middle">
+              <rect x="10" y="10" width="110" height="34" rx="7" fill="#0b3d73" /><text x="65" y="31">User / Load</text>
+              <rect x="145" y="10" width="120" height="34" rx="7" fill="#0b3d73" /><text x="205" y="31">Trigger</text>
+              <rect x="290" y="10" width="120" height="34" rx="7" fill="#0b3d73" /><text x="350" y="31">Handler</text>
+              <rect x="435" y="10" width="150" height="34" rx="7" fill="#0b3d73" /><text x="510" y="31">RenewalTaskService</text>
+              <rect x="610" y="10" width="110" height="34" rx="7" fill="#0b3d73" /><text x="665" y="31">Selectors</text>
+              <rect x="745" y="10" width="105" height="34" rx="7" fill="#0b3d73" /><text x="797" y="31">Database</text>
+            </g>
+            <g stroke="#9db9d6" stroke-width="1.2" stroke-dasharray="5 4">
+              <line x1="65" y1="44" x2="65" y2="540" />
+              <line x1="205" y1="44" x2="205" y2="540" />
+              <line x1="350" y1="44" x2="350" y2="540" />
+              <line x1="510" y1="44" x2="510" y2="540" />
+              <line x1="665" y1="44" x2="665" y2="540" />
+              <line x1="797" y1="44" x2="797" y2="540" />
+            </g>
+            <g stroke="#0b3d73" stroke-width="1.5" fill="none" marker-end="url(#seq-arrow)">
+              <line x1="65" y1="80" x2="203" y2="80" />
+              <line x1="205" y1="118" x2="348" y2="118" />
+              <line x1="350" y1="156" x2="508" y2="156" />
+              <path d="M510 194 H560 V214 H512" />
+              <line x1="510" y1="262" x2="663" y2="262" />
+              <line x1="665" y1="300" x2="795" y2="300" />
+              <path d="M510 338 H560 V358 H512" />
+              <line x1="510" y1="396" x2="795" y2="396" />
+              <line x1="510" y1="434" x2="795" y2="434" />
+              <line x1="508" y1="486" x2="352" y2="486" stroke-dasharray="5 4" />
+              <line x1="348" y1="516" x2="207" y2="516" stroke-dasharray="5 4" />
+            </g>
+            <g font-size="11.5" fill="#0f2a47" stroke="#ffffff" stroke-width="4" paint-order="stroke">
+              <text x="72" y="72">1 save agreements (1..200)</text>
+              <text x="212" y="110">2 afterInsert / afterUpdate</text>
+              <text x="357" y="148">3 createRenewalTasks(list)</text>
+              <text x="570" y="198" font-weight="600">4 keep eligible agreements</text>
+              <text x="570" y="212" fill="#5b6b7c">pure rule, injectable date</text>
+              <text x="517" y="254">5 re-read FOR UPDATE + existing Tasks</text>
+              <text x="672" y="292">6 SOQL (user mode)</text>
+              <text x="570" y="342" font-weight="600">7 build Tasks: owner fallback,</text>
+              <text x="570" y="356" fill="#5b6b7c">due date = End Date - 10 (min. today)</text>
+              <text x="517" y="388">8 insert Tasks (1 DML)</text>
+              <text x="517" y="426">9 write Renewal_Task_Id__c (1 DML)</text>
+              <text x="360" y="478">10 results</text>
+              <text x="214" y="508">11 addError on failed agreements</text>
+            </g>
+          </svg>
+          <figcaption>Figure 2. Trigger path for one or many agreements (steps 5, 8 and 9 happen once per transaction).</figcaption>
+        </figure>
+        <p>
+          Step 9 re-fires the trigger on the updated agreements. The service ignores them, because
+          <code>Renewal_Task_Id__c</code> is now populated, so the loop ends after one extra pass.
+        </p>
+
+        <h3>Upcoming Renewals component</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px">Step</th>
+              <th>Interaction</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>The component loads and calls a cacheable Apex method on <code>UpcomingRenewalsController</code>.</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>The controller calls <code>UpcomingRenewalsService</code>, which asks <code>ServiceAgreementSelector</code> for qualifying agreements (one SOQL in user mode).</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>The service computes Days Remaining and the controller maps the result to a DTO that exposes only the displayed fields.</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>The user selects rows and clicks Start Renewal. The component calls a second, non-cacheable method with the selected Ids.</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>The service sets <code>Renewal_Work_Status__c</code> to In Progress with one user-mode DML, returning per-record results.</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>The component shows a toast and refreshes the list. Errors become <code>AuraHandledException</code> messages.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Data View</h2>
+        <figure class="figure">
+          <svg viewBox="0 0 900 400" role="img" aria-label="Entity relationship diagram" width="900">
+            <defs>
+              <marker id="er-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" fill="#1f8fe8" />
+              </marker>
+            </defs>
+            <!-- Account -->
+            <rect x="20" y="40" width="170" height="70" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+            <text x="105" y="66" text-anchor="middle" font-size="13" font-weight="700" fill="#0f2a47">Account</text>
+            <text x="105" y="88" text-anchor="middle" font-size="11" fill="#5b6b7c">standard object</text>
+
+            <!-- Service Agreement -->
+            <rect x="300" y="20" width="290" height="248" rx="8" fill="#fff" stroke="#0b3d73" stroke-width="2" />
+            <rect x="300" y="20" width="290" height="32" rx="8" fill="#0b3d73" />
+            <text x="445" y="42" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Service_Agreement__c</text>
+            <g font-size="11.5" fill="#0f2a47">
+              <text x="314" y="76">Name (Agreement Name)</text>
+              <text x="314" y="96">Account__c  (Lookup, required)</text>
+              <text x="314" y="116">Start_Date__c  (required)</text>
+              <text x="314" y="136">End_Date__c  (required)</text>
+              <text x="314" y="156">Status__c  (Draft | Active | Expired | Cancelled)</text>
+              <text x="314" y="176">Agreement_Value__c  (Currency)</text>
+              <text x="314" y="196">Renewal_Required__c  (Checkbox)</text>
+              <text x="314" y="216">Account_Manager__c  (Lookup User)</text>
+              <text x="314" y="236">Renewal_Work_Status__c  (required)</text>
+              <text x="314" y="256">Renewal_Task_Id__c  (system-managed)</text>
+            </g>
+
+            <!-- User -->
+            <rect x="710" y="40" width="170" height="70" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+            <text x="795" y="66" text-anchor="middle" font-size="13" font-weight="700" fill="#0f2a47">User</text>
+            <text x="795" y="88" text-anchor="middle" font-size="11" fill="#5b6b7c">Account Manager, Owner</text>
+
+            <!-- Task -->
+            <rect x="300" y="318" width="290" height="62" rx="8" fill="#eef6fd" stroke="#1f8fe8" stroke-width="1.5" />
+            <text x="445" y="342" text-anchor="middle" font-size="13" font-weight="700" fill="#0f2a47">Task</text>
+            <text x="445" y="362" text-anchor="middle" font-size="11" fill="#5b6b7c">WhatId, OwnerId, ActivityDate, Subject</text>
+
+            <!-- Custom metadata -->
+            <rect x="710" y="318" width="170" height="62" rx="8" fill="#fff" stroke="#9db9d6" stroke-width="1.5" stroke-dasharray="5 4" />
+            <text x="795" y="342" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0f2a47">Renewal_Setting__mdt</text>
+            <text x="795" y="362" text-anchor="middle" font-size="11" fill="#5b6b7c">window days, lead days</text>
+
+            <g stroke="#1f8fe8" stroke-width="1.6" fill="none" marker-end="url(#er-arrow)">
+              <line x1="300" y1="96" x2="192" y2="80" />
+              <line x1="590" y1="216" x2="708" y2="95" />
+              <line x1="445" y1="268" x2="445" y2="316" />
+            </g>
+            <g font-size="11" fill="#5b6b7c">
+              <text x="20" y="132">* to 1, restrict delete</text>
+              <text x="620" y="140">* to 0..1</text>
+              <text x="456" y="296">1 to 0..1 via WhatId</text>
+              <text x="795" y="398" text-anchor="middle">read by RenewalSettings</text>
+            </g>
+          </svg>
+          <figcaption>Figure 3. Data model.</figcaption>
+        </figure>
+
+        <h3>State models</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 200px">Field</th>
+              <th>Lifecycle</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Status__c</code></td>
+              <td>Draft &rarr; Active &rarr; Expired, or Cancelled from Draft or Active. Only Active participates in renewal.</td>
+            </tr>
+            <tr>
+              <td><code>Renewal_Work_Status__c</code></td>
+              <td>Not Started &rarr; In Progress. Independent of Status, so an agreement stays visible while it is being renewed.</td>
+            </tr>
+            <tr>
+              <td><code>Renewal_Task_Id__c</code></td>
+              <td>Empty &rarr; populated once, by the system. Its presence means "a Renewal Task exists".</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Security View</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 220px">Concern</th>
+              <th>Design response</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Who may use the feature</td>
+              <td>A dedicated permission set grants the object, field and Apex class access. Profiles are not modified (least privilege).</td>
+            </tr>
+            <tr>
+              <td>Record visibility</td>
+              <td>All Apex runs <code>with sharing</code>. Queries use <code>WITH USER_MODE</code>, so sharing rules apply to the list the user sees.</td>
+            </tr>
+            <tr>
+              <td>Field-level security</td>
+              <td>User-mode queries and DML enforce FLS. Users without access to Agreement Value do not receive it.</td>
+            </tr>
+            <tr>
+              <td>Data exposure to the browser</td>
+              <td>The controller returns a purpose-built DTO, never raw SObjects.</td>
+            </tr>
+            <tr>
+              <td>Injection</td>
+              <td>No dynamic SOQL built from strings. Inputs are bound variables or typed Ids.</td>
+            </tr>
+            <tr>
+              <td>System-managed field</td>
+              <td><code>Renewal_Task_Id__c</code> is written only by the service and is read-only on the layout.</td>
+            </tr>
+            <tr>
+              <td>Sharing model</td>
+              <td>Public Read/Write on the object, so an Account Manager who is not the owner can still see and update the agreement they are assigned to renew. Documented as an assumption.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Deployment View</h2>
+        <h3>Delivery pipeline</h3>
+        <ol class="pipeline">
+          <li><strong>Branch</strong>feature branch from main</li>
+          <li><strong>Local checks</strong>lint, Prettier, Jest</li>
+          <li><strong>Pull request</strong>peer review</li>
+          <li><strong>Validate</strong>check-only deploy and Apex tests</li>
+          <li><strong>Merge</strong>into main</li>
+          <li><strong>Deploy</strong>to the org</li>
+        </ol>
+
+        <h3>Principles</h3>
+        <ul>
+          <li><strong>Nothing reaches main directly.</strong> Every change travels in a branch and a pull request.</li>
+          <li><strong>Validate before deploy.</strong> A check-only deployment with tests proves the change is deployable without touching the org.</li>
+          <li><strong>Deploy exactly what was validated.</strong> The validated change set is the one promoted.</li>
+          <li><strong>Small, targeted deployments.</strong> Deploy by source path so unrelated metadata is never overwritten.</li>
+          <li><strong>The pipeline deploys to Salesforce only.</strong> Git operations are performed by the developer.</li>
+        </ul>
+
+        <h3>Environments</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 150px">Environment</th>
+              <th>Use</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Local workspace</td>
+              <td>Source of truth for metadata, Jest tests, linting, formatting and documentation.</td>
+            </tr>
+            <tr>
+              <td>Developer Edition org (<code>dev</code>)</td>
+              <td>Target of validation and deployment, and the demo environment.</td>
+            </tr>
+            <tr>
+              <td>Recommended next step</td>
+              <td>Add a sandbox or scratch org as a staging step before production, using the same commands with another alias.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Quality Attributes</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 130px">Attribute</th>
+              <th>Scenario</th>
+              <th style="width: 280px">How the architecture responds</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Scalability</td>
+              <td>A data load saves 10,000 agreements.</td>
+              <td>The platform processes 200 records per transaction. Each transaction stays within a fixed budget of queries and DML (next section).</td>
+            </tr>
+            <tr>
+              <td>Reliability</td>
+              <td>The same agreement is saved twice in a row, or by two users at once.</td>
+              <td>Marker field, a locked re-read and a secondary Task check yield exactly one Task.</td>
+            </tr>
+            <tr>
+              <td>Correctness</td>
+              <td>An agreement ends on Mar 1 of a leap year.</td>
+              <td><code>Date</code> arithmetic is calendar-aware and a single clock supplies "today", so boundary cases are tested deterministically.</td>
+            </tr>
+            <tr>
+              <td>Security</td>
+              <td>A user without access to Agreement Value opens the component.</td>
+              <td>User-mode queries and a DTO built from permitted fields.</td>
+            </tr>
+            <tr>
+              <td>Maintainability</td>
+              <td>The business changes the window from 30 to 45 days.</td>
+              <td>One Custom Metadata value changes. No code release.</td>
+            </tr>
+            <tr>
+              <td>Testability</td>
+              <td>A rule must be verified for 200 mixed records.</td>
+              <td>Domain logic is pure; services receive a test data factory and an overridable clock.</td>
+            </tr>
+            <tr>
+              <td>Usability</td>
+              <td>Nothing qualifies, or the call fails.</td>
+              <td>The component shows an empty state or a clear error message instead of a blank screen.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Governor-limit budget (trigger path, 200 records)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 260px">Resource</th>
+              <th style="width: 140px">Expected use</th>
+              <th>Platform limit and notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SOQL queries</td>
+              <td>2 to 3</td>
+              <td>100 per transaction. Re-read of agreements, existing Tasks and, if needed, user data. Configuration comes from Custom Metadata, which does not count.</td>
+            </tr>
+            <tr>
+              <td>DML statements</td>
+              <td>2</td>
+              <td>150 per transaction. One insert of Tasks, one update of agreements.</td>
+            </tr>
+            <tr>
+              <td>DML rows</td>
+              <td>at most 400</td>
+              <td>10,000 per transaction. Up to 200 Tasks plus 200 agreements.</td>
+            </tr>
+            <tr>
+              <td>Queries inside loops</td>
+              <td>0</td>
+              <td>Enforced by design: selectors are called once with a set of Ids.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Architecture Decision Records</h2>
+        <p>Each record states the context, the decision and its consequences. All are accepted.</p>
+
+        <h3>ADR-001: Custom object Service_Agreement__c</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> The assessment describes a "Service Agreement" with Status, End Date, Agreement Value and Renewal Required. Standard Contract and Service Contract were evaluated.</p>
+        <p><strong>Decision.</strong> Create a custom object.</p>
+        <p><strong>Consequences.</strong> Standard objects make Status and End Date derived or read-only and have no Renewal Required field, which makes the rules untestable and unmodifiable. The custom object costs some setup but gives full control and a clean contract for tests and the UI.</p>
+
+        <h3>ADR-002: Layered Apex without a framework</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> The solution needs separation of concerns, bulk safety and testability, with a small codebase.</p>
+        <p><strong>Decision.</strong> Thin trigger, handler, services, domain, selectors and a single controller, implemented with plain classes.</p>
+        <p><strong>Consequences.</strong> No dependency on fflib or the Trigger Actions Framework and a smaller surface to explain. The conventions are compatible, so adopting a framework later is a refactor of wiring, not of business rules.</p>
+
+        <h3>ADR-003: Apex trigger instead of Record-Triggered Flow</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> A Flow could create the Task declaratively.</p>
+        <p><strong>Decision.</strong> Use Apex for Task creation. Use declarative tools for metadata, validation, configuration and access.</p>
+        <p><strong>Consequences.</strong> Bulk duplicate detection, owner fallback and boundary-date tests are explicit and unit-testable in Apex. The cost is a developer, rather than an admin, maintaining the logic.</p>
+
+        <h3>ADR-004: Business parameters in Custom Metadata</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> The 30-day window and the 10-day lead are business rules that can change.</p>
+        <p><strong>Decision.</strong> Store them in <code>Renewal_Setting__mdt</code>, with safe defaults in code.</p>
+        <p><strong>Consequences.</strong> Admins can tune behavior without a release. A missing record never breaks the feature.</p>
+
+        <h3>ADR-005: Duplicate prevention marker on the agreement</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span> &middot; replaces the initial design of a unique key on Task</p>
+        <p><strong>Context.</strong> The first design placed a unique external key on Task. Deploying any custom field to Task or Event fails in this org with <code>bad value for restricted picklist field</code>, while the same field deploys to Account.</p>
+        <p><strong>Decision.</strong> Store the created Task Id in <code>Renewal_Task_Id__c</code> on the agreement, re-read agreements with <code>FOR UPDATE</code> before deciding, and keep a secondary check by <code>WhatId</code>.</p>
+        <p><strong>Consequences.</strong> The marker is visible to users and reusable by the UI. There is one extra DML and a follow-up trigger pass that the handler ignores. A database-level unique constraint is not available, so correctness relies on the locked re-read and is covered by tests.</p>
+
+        <h3>ADR-006: Account Manager as a User lookup with owner fallback</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> A Task owner must be a User. The Account Manager can be empty or inactive.</p>
+        <p><strong>Decision.</strong> Lookup to User, optional. If empty or inactive, the Task goes to the agreement owner.</p>
+        <p><strong>Consequences.</strong> No renewal is dropped and saving is never blocked. The assignee may occasionally not be the Account Manager, which is documented.</p>
+
+        <h3>ADR-007: Date type and an injectable clock</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> Renewals use calendar days and must be correct around month, year and leap-year boundaries.</p>
+        <p><strong>Decision.</strong> Use <code>Date</code> only, <code>addDays</code> and <code>daysBetween</code> for arithmetic, and a single <code>RenewalClock</code> as the source of today.</p>
+        <p><strong>Consequences.</strong> No time-zone drift and no hand-written calendar code. Tests pin the clock, so boundary cases do not depend on the day the test runs.</p>
+
+        <h3>ADR-008: One controller and a DTO for the component</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> The component needs flattened, display-ready data and one write action.</p>
+        <p><strong>Decision.</strong> A single <code>@AuraEnabled</code> controller delegates to a service and returns a DTO.</p>
+        <p><strong>Consequences.</strong> The UI is decoupled from the data model, exposes only permitted fields and has one place to translate exceptions into user messages.</p>
+
+        <h3>ADR-009: Renewal Work Status stored on the agreement</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> Users must indicate that renewal work has started.</p>
+        <p><strong>Decision.</strong> A dedicated picklist on the agreement, independent of Status and of the Task.</p>
+        <p><strong>Consequences.</strong> A single source of truth on the managed record. The list does not depend on a Task existing and the agreement stays visible while in progress. Synchronizing the Task status is a roadmap item.</p>
+
+        <h3>ADR-010: Branch, pull request and merge workflow</h3>
+        <p class="adr-meta"><span class="badge done">Accepted</span></p>
+        <p><strong>Context.</strong> The repository is the submission and should show disciplined delivery.</p>
+        <p><strong>Decision.</strong> All changes travel through feature branches and pull requests. Validation runs before merge; deployment follows merge.</p>
+        <p><strong>Consequences.</strong> A reviewable history and a safe main branch, at the cost of a few extra steps.</p>
+
+        <h2>Risks and Technical Debt</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 220px">Risk</th>
+              <th style="width: 90px">Level</th>
+              <th>Mitigation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>An agreement entering the 30-day window is never saved again, so no Task is created</td>
+              <td>Medium</td>
+              <td>Roadmap: a daily scheduled batch reusing <code>RenewalTaskService</code>. Documented as a known limitation.</td>
+            </tr>
+            <tr>
+              <td>Marker cleared by an administrator or a data load</td>
+              <td>Low</td>
+              <td>The secondary check by <code>WhatId</code> prevents a second Task and the marker is restored.</td>
+            </tr>
+            <tr>
+              <td>No database-level uniqueness for Tasks</td>
+              <td>Low</td>
+              <td>Locked re-read plus tests for repeated and concurrent saves. See ADR-005.</td>
+            </tr>
+            <tr>
+              <td>Public Read/Write sharing exposes values to all users</td>
+              <td>Low</td>
+              <td>Field-level security on Agreement Value through the permission set, and sharing can be tightened later.</td>
+            </tr>
+            <tr>
+              <td>Single org with no staging environment</td>
+              <td>Medium</td>
+              <td>Check-only validation with tests before every deployment. Add a sandbox for production use.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Evolution Roadmap</h2>
+        <ul>
+          <li><strong>Daily scheduled job</strong> (Schedulable + Batchable) to catch agreements that enter the window without being edited.</li>
+          <li><strong>Notifications:</strong> custom notification or e-mail for new and overdue Renewal Tasks.</li>
+          <li><strong>Task and agreement synchronization:</strong> mark the Task In Progress when renewal work starts.</li>
+          <li><strong>Queue or team ownership</strong> as the fallback assignee instead of the record owner.</li>
+          <li><strong>Reporting:</strong> dashboards on renewal value at risk and renewal conversion.</li>
+          <li><strong>Framework adoption</strong> (fflib or Trigger Actions Framework) if the number of triggers grows.</li>
+        </ul>
+
+        <h2>Requirements Traceability</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 190px">Requirement</th>
+              <th>Architecture elements <span class="badge planned">Planned</span></th>
+              <th style="width: 250px">Verified by</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>R1 Identify agreements</td>
+              <td><code>UpcomingRenewalsService</code>, <code>RenewalEligibility</code>, <code>ServiceAgreementSelector</code></td>
+              <td>Eligibility and service tests, including negatives</td>
+            </tr>
+            <tr>
+              <td>R2 Renewal Task, no duplicates, bulk</td>
+              <td>Trigger, handler, <code>RenewalTaskService</code>, marker field, both selectors</td>
+              <td>Trigger tests with 200+ records, repeated updates and pre-existing Tasks</td>
+            </tr>
+            <tr>
+              <td>R3 Lightning Web Component</td>
+              <td><code>upcomingRenewals</code>, <code>UpcomingRenewalsController</code>, DTO</td>
+              <td>Controller tests and Jest tests</td>
+            </tr>
+            <tr>
+              <td>R4 Date handling</td>
+              <td><code>RenewalClock</code>, <code>RenewalEligibility</code></td>
+              <td>Boundary tests for window edges, month, year and leap year</td>
+            </tr>
+            <tr>
+              <td>R5 Testing</td>
+              <td>Test classes and <code>RenewalTestDataFactory</code></td>
+              <td>The test suite itself and coverage report</td>
+            </tr>
+            <tr>
+              <td>Governor limits and bulkification</td>
+              <td>Selectors and services, one query and one DML per object</td>
+              <td>Bulk tests that assert limits usage</td>
+            </tr>
+            <tr>
+              <td>Security and data access</td>
+              <td>Sharing, user mode, permission set, DTO</td>
+              <td>Tests that run as a restricted user</td>
+            </tr>
+            <tr>
+              <td>Error handling</td>
+              <td>Partial-success DML, <code>addError</code>, <code>AuraHandledException</code></td>
+              <td>Negative and failure-path tests</td>
+            </tr>
+            <tr>
+              <td>Declarative vs programmatic</td>
+              <td>Object, fields, validation rule, Custom Metadata, permission set are declarative; Task creation is Apex</td>
+              <td>ADR-003 and ADR-004</td>
+            </tr>
+          </tbody>
+        </table>
+      </main>
+
+      <section id="document-owner">
+        <h2 class="unnumbered">Document Owner</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Enzo Fischer</td>
+              <td>Developer</td>
+              <td>enzo_fischer10@hotmail.com</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer class="doc-footer">Upcoming Renewals - Software Architecture Document - v0.1</footer>
+    </div>
+
+    <script src="assets/docs.js"></script>
+  </body>
+</html>

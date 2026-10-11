@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>End_Date__c</fullName>
+    <description>Last day the service agreement is in force. Drives renewal eligibility and the Renewal Task due date.</description>
+    <inlineHelpText>The date the agreement ends. Must not be earlier than the Start Date.</inlineHelpText>
+    <label>End Date</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Date</type>
+</CustomField>

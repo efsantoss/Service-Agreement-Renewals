@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Upcoming Renewals - Functional Documentation</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body>
+    <div class="toolbar no-print">
+      <button id="export-pdf" type="button">Export to PDF</button>
+    </div>
+    <div class="watermark" aria-hidden="true"></div>
+
+    <div class="page">
+      <header class="cover">
+        <img class="cover-logo" src="assets/logo.png" alt="Company logo" onerror="this.remove()" />
+        <p class="eyebrow">Salesforce Developer Technical Assessment</p>
+        <h1>Upcoming Renewals</h1>
+        <p class="subtitle">Functional Documentation</p>
+        <p class="tagline">Service Agreement renewal management for Salesforce</p>
+        <dl class="meta">
+          <dt>Version</dt>
+          <dd>0.2 (Draft)</dd>
+          <dt>Last modified</dt>
+          <dd>Oct 11, 2026</dd>
+          <dt>Audience</dt>
+          <dd>Business &amp; Product</dd>
+          <dt>Companion</dt>
+          <dd>Technical Documentation, Software Architecture Document</dd>
+        </dl>
+      </header>
+
+      <section id="version-history">
+        <h2 class="unnumbered">Version History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 90px">Version</th>
+              <th style="width: 150px">Modified by</th>
+              <th style="width: 130px">Last modified</th>
+              <th>What was modified</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0.1</td>
+              <td>Enzo Fischer</td>
+              <td>Oct 10, 2026</td>
+              <td>
+                Initial draft: document structure, agreed business rules, data model and planned user
+                experience.
+              </td>
+            </tr>
+            <tr>
+              <td>0.2</td>
+              <td>Enzo Fischer</td>
+              <td>Oct 11, 2026</td>
+              <td>
+                Data section reconciled with the deployed object (added the system-managed Renewal
+                Task Id field; Renewal Work Status is required). Added a companion Software
+                Architecture Document.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="table-of-contents">
+        <h2 class="unnumbered">Table of Contents</h2>
+        <nav id="toc" aria-label="Table of contents"></nav>
+      </section>
+
+      <main class="page-break">
+        <h2>Introduction</h2>
+        <p>
+          This document describes <strong>what</strong> the Upcoming Renewals solution does, from a
+          business point of view: which problem it solves, which rules it applies and what users see
+          and do. It intentionally avoids implementation detail. How the solution is built is covered
+          in the companion <em>Technical Documentation</em>.
+        </p>
+        <div class="callout">
+          <p>
+            <strong>Document status.</strong> This is a living document. Sections that describe
+            behavior that is still being built are marked
+            <span class="badge planned">Planned</span> and are verified against the final solution
+            before submission.
+          </p>
+        </div>
+
+        <h3>Audience</h3>
+        <ul>
+          <li>Business stakeholders who own the renewal process.</li>
+          <li>Account Managers and Sales Operations who use the solution daily.</li>
+          <li>Salesforce administrators who maintain configuration.</li>
+        </ul>
+
+        <h2>Business Context and Objectives</h2>
+        <h3>The problem</h3>
+        <p>
+          The customer manages Service Agreements in Salesforce. When an agreement reaches its end
+          date without a renewal conversation, the customer risks losing recurring revenue or leaving
+          a client without coverage. Today nothing in Salesforce tells the team which agreements are
+          approaching expiration, and nobody is explicitly assigned to act on them.
+        </p>
+
+        <h3>Objectives</h3>
+        <ul>
+          <li>Automatically identify agreements that need renewal attention.</li>
+          <li>Give every qualifying agreement a clear owner and a due date.</li>
+          <li>Give the team one simple screen to review and manage upcoming renewals.</li>
+          <li>Never create noise: no duplicate work items and no silently dropped renewals.</li>
+        </ul>
+
+        <h2>Scope</h2>
+        <h3>In scope</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 200px">Capability</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Service Agreement record</td>
+              <td>A custom object that stores the agreement and the data needed to manage its renewal.</td>
+            </tr>
+            <tr>
+              <td>Renewal identification</td>
+              <td>A single, consistent definition of when an agreement requires attention.</td>
+            </tr>
+            <tr>
+              <td>Automatic Renewal Task</td>
+              <td>A Task is created for the Account Manager when an agreement qualifies.</td>
+            </tr>
+            <tr>
+              <td>Upcoming Renewals screen</td>
+              <td>A Lightning component that lists qualifying agreements and lets users mark renewal work as started.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Out of scope (first version)</h3>
+        <ul>
+          <li>Creating the renewed agreement itself (renewal opportunity or contract generation).</li>
+          <li>E-mail or push notifications.</li>
+          <li>Approval processes.</li>
+          <li>Business-day or holiday calendars (the business operates seven days a week).</li>
+        </ul>
+        <p>Possible follow-ups are listed in <em>Future Enhancements</em>.</p>
+
+        <h2>Users and Roles</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 190px">Role</th>
+              <th>Responsibility in this solution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Account Manager</td>
+              <td>
+                Receives the Renewal Task, reviews the agreement and starts the renewal conversation
+                with the customer.
+              </td>
+            </tr>
+            <tr>
+              <td>Renewal / Sales Operations lead</td>
+              <td>Uses the Upcoming Renewals screen to see what is expiring, who owns it and how much value is at risk.</td>
+            </tr>
+            <tr>
+              <td>Salesforce administrator</td>
+              <td>Maintains the renewal settings and assigns the permission set to users.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Business Rules</h2>
+        <p>These rules are the single source of truth for the behavior of the solution.</p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 70px">ID</th>
+              <th style="width: 190px">Rule</th>
+              <th>Definition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>BR-01</td>
+              <td>Renewal attention criteria</td>
+              <td>
+                An agreement requires attention when <strong>all</strong> of these are true:
+                Status is <code>Active</code>, Renewal Required is checked, and the End Date falls
+                within the next 30 calendar days.
+              </td>
+            </tr>
+            <tr>
+              <td>BR-02</td>
+              <td>The 30-day window</td>
+              <td>
+                The window runs from today through today + 30 days, both days included. Agreements
+                that have already ended are not part of the window.
+              </td>
+            </tr>
+            <tr>
+              <td>BR-03</td>
+              <td>Renewal Task creation</td>
+              <td>
+                When an agreement is created or updated and meets BR-01, a Renewal Task is created
+                for the Account Manager.
+              </td>
+            </tr>
+            <tr>
+              <td>BR-04</td>
+              <td>Task due date</td>
+              <td>
+                The Task is due <strong>10 calendar days before</strong> the End Date. If that date
+                has already passed (the agreement ends in fewer than 10 days), the Task is due
+                today so that it is never created overdue.
+              </td>
+            </tr>
+            <tr>
+              <td>BR-05</td>
+              <td>Task assignee</td>
+              <td>
+                The Task is assigned to the Account Manager. If the agreement has no Account Manager,
+                or the Account Manager is inactive, the Task is assigned to the agreement owner so
+                that no renewal is dropped.
+              </td>
+            </tr>
+            <tr>
+              <td>BR-06</td>
+              <td>No duplicate Tasks</td>
+              <td>
+                An agreement has at most one Renewal Task. Editing the agreement again, in any way,
+                never creates a second Task.
+              </td>
+            </tr>
+            <tr>
+              <td>BR-07</td>
+              <td>Calendar days</td>
+              <td>
+                All calculations use calendar days. Weekends and holidays are counted like any other
+                day. Month ends, year ends and leap years are handled correctly.
+              </td>
+            </tr>
+            <tr>
+              <td>BR-08</td>
+              <td>Date consistency</td>
+              <td>The End Date cannot be earlier than the Start Date.</td>
+            </tr>
+            <tr>
+              <td>BR-09</td>
+              <td>Renewal work status</td>
+              <td>
+                Each agreement tracks whether renewal work is <code>Not Started</code> or
+                <code>In Progress</code>. Marking work as started does not change the agreement
+                Status, so the agreement stays visible on the Upcoming Renewals screen.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Date examples</h3>
+        <p>The due date is always the End Date minus 10 calendar days.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>End Date</th>
+              <th>Task due date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Month boundary</td>
+              <td>Mar 5, 2027</td>
+              <td>Feb 23, 2027</td>
+            </tr>
+            <tr>
+              <td>Year boundary</td>
+              <td>Jan 5, 2027</td>
+              <td>Dec 26, 2026</td>
+            </tr>
+            <tr>
+              <td>Leap year (29 days in February)</td>
+              <td>Mar 1, 2028</td>
+              <td>Feb 20, 2028</td>
+            </tr>
+            <tr>
+              <td>Non-leap year (28 days in February)</td>
+              <td>Mar 1, 2027</td>
+              <td>Feb 19, 2027</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Service Agreement Data</h2>
+        <p>
+          The Service Agreement is a custom object. The fields below are the business view of the
+          record. Technical names are listed in the Technical Documentation.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 170px">Field</th>
+              <th style="width: 120px">Type</th>
+              <th style="width: 90px">Required</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Agreement Name</td>
+              <td>Text</td>
+              <td>Yes</td>
+              <td>Human-friendly name of the agreement.</td>
+            </tr>
+            <tr>
+              <td>Account</td>
+              <td>Lookup (Account)</td>
+              <td>Yes</td>
+              <td>The customer the agreement belongs to. An account with agreements cannot be deleted.</td>
+            </tr>
+            <tr>
+              <td>Start Date</td>
+              <td>Date</td>
+              <td>Yes</td>
+              <td>First day the agreement is in force.</td>
+            </tr>
+            <tr>
+              <td>End Date</td>
+              <td>Date</td>
+              <td>Yes</td>
+              <td>Last day of the agreement. Drives the renewal logic.</td>
+            </tr>
+            <tr>
+              <td>Status</td>
+              <td>Picklist</td>
+              <td>Yes</td>
+              <td>Draft, Active, Expired or Cancelled.</td>
+            </tr>
+            <tr>
+              <td>Agreement Value</td>
+              <td>Currency</td>
+              <td>No</td>
+              <td>Value of the agreement. Shown to help prioritize renewals.</td>
+            </tr>
+            <tr>
+              <td>Renewal Required</td>
+              <td>Checkbox</td>
+              <td>No</td>
+              <td>Marks agreements that must be renewed. Unchecked agreements are ignored.</td>
+            </tr>
+            <tr>
+              <td>Account Manager</td>
+              <td>Lookup (User)</td>
+              <td>No</td>
+              <td>The person responsible for the renewal and the default Task assignee.</td>
+            </tr>
+            <tr>
+              <td>Renewal Work Status</td>
+              <td>Picklist</td>
+              <td>Yes</td>
+              <td>Not Started (default) or In Progress. See BR-09.</td>
+            </tr>
+            <tr>
+              <td>Renewal Task Id</td>
+              <td>Text</td>
+              <td>System</td>
+              <td>
+                Filled in automatically with the Id of the Renewal Task created for the agreement.
+                It is how the system knows a Task already exists (BR-06). Users should not edit it.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Automatic Renewal Task</h2>
+        <h3>How it behaves</h3>
+        <ol>
+          <li>A user, an integration or a data load saves a Service Agreement.</li>
+          <li>Salesforce checks BR-01 for every saved agreement. This works for a single record and for large batches.</li>
+          <li>For each qualifying agreement that does not already have a Renewal Task, one Task is created.</li>
+          <li>Agreements that do not qualify are left untouched.</li>
+        </ol>
+
+        <h3>The Renewal Task</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 190px">Task field</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Subject</td>
+              <td>Renewal: followed by the agreement name</td>
+            </tr>
+            <tr>
+              <td>Assigned To</td>
+              <td>Account Manager, or the agreement owner as a fallback (BR-05)</td>
+            </tr>
+            <tr>
+              <td>Due Date</td>
+              <td>End Date minus 10 calendar days (BR-04)</td>
+            </tr>
+            <tr>
+              <td>Related To</td>
+              <td>The Service Agreement</td>
+            </tr>
+            <tr>
+              <td>Status / Priority</td>
+              <td>Not Started / Normal</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Edge cases</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 320px">Situation</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Agreement is edited after its Task was created</td>
+              <td>No new Task (BR-06).</td>
+            </tr>
+            <tr>
+              <td>End Date is changed after the Task was created</td>
+              <td>No new Task. The existing Task remains the single record of the renewal.</td>
+            </tr>
+            <tr>
+              <td>Agreement ends in fewer than 10 days</td>
+              <td>Task is due today (BR-04).</td>
+            </tr>
+            <tr>
+              <td>Account Manager is empty or inactive</td>
+              <td>Task goes to the agreement owner (BR-05).</td>
+            </tr>
+            <tr>
+              <td>Status is not Active, or Renewal Required is unchecked</td>
+              <td>No Task.</td>
+            </tr>
+            <tr>
+              <td>End Date is outside the 30-day window</td>
+              <td>No Task.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Upcoming Renewals Screen <span class="badge planned">Planned</span></h2>
+        <p>
+          Upcoming Renewals is a Lightning component that can be placed on a Home, App or Record
+          page. It lists the agreements that meet BR-01.
+        </p>
+
+        <h3>What users see</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 190px">Column</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Account</td>
+              <td>Customer name.</td>
+            </tr>
+            <tr>
+              <td>Agreement</td>
+              <td>Agreement name, linking to the record.</td>
+            </tr>
+            <tr>
+              <td>End Date</td>
+              <td>The agreement end date.</td>
+            </tr>
+            <tr>
+              <td>Days Remaining</td>
+              <td>Calendar days from today to the End Date. Urgent items are visually highlighted.</td>
+            </tr>
+            <tr>
+              <td>Agreement Value</td>
+              <td>Currency value of the agreement.</td>
+            </tr>
+            <tr>
+              <td>Account Manager</td>
+              <td>Name of the responsible person.</td>
+            </tr>
+            <tr>
+              <td>Renewal Work</td>
+              <td>Not Started or In Progress.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>The list is ordered by the soonest End Date first, and by the highest value when dates are equal.</p>
+
+        <h3>Marking renewal work as started</h3>
+        <ol>
+          <li>The user selects one or more agreements in the list.</li>
+          <li>The user clicks <strong>Start Renewal</strong>.</li>
+          <li>The selected agreements change to <code>In Progress</code> and the list refreshes.</li>
+          <li>The user sees a confirmation message. If a record cannot be updated, a clear message explains why and the other records are still processed.</li>
+        </ol>
+        <p>The screen also shows a friendly message when there is nothing to renew and when the data cannot be loaded.</p>
+
+        <h2>Security and Access</h2>
+        <ul>
+          <li>Users only see agreements they are allowed to see in Salesforce. The screen never bypasses sharing rules.</li>
+          <li>Users only see fields they have access to, including Agreement Value.</li>
+          <li>Access is granted through a dedicated permission set, following the principle of least privilege.</li>
+          <li>Only users who can edit an agreement can mark its renewal work as started.</li>
+        </ul>
+
+        <h2>Assumptions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px">#</th>
+              <th>Assumption</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>A1</td>
+              <td>The Service Agreement is a new custom object, because the standard Contract and Service Contract objects cannot store the required fields or control Status and End Date.</td>
+            </tr>
+            <tr>
+              <td>A2</td>
+              <td>"Within the next 30 days" means from today through today + 30, inclusive. Agreements that have already ended do not qualify.</td>
+            </tr>
+            <tr>
+              <td>A3</td>
+              <td>When the Account Manager is empty or inactive, the agreement owner receives the Task.</td>
+            </tr>
+            <tr>
+              <td>A4</td>
+              <td>One Renewal Task per agreement for its lifetime. Changing the End Date later does not create another Task.</td>
+            </tr>
+            <tr>
+              <td>A5</td>
+              <td>If the due date (End Date minus 10 days) is already in the past, the Task is due today.</td>
+            </tr>
+            <tr>
+              <td>A6</td>
+              <td>Marking renewal work as started is tracked on the agreement and does not change its Status.</td>
+            </tr>
+            <tr>
+              <td>A7</td>
+              <td>"Today" is based on the Salesforce user time zone settings.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Future Enhancements</h2>
+        <ul>
+          <li>
+            <strong>Daily scheduled job.</strong> Agreements are evaluated when they are saved. A daily
+            job would also catch agreements that enter the 30-day window without being edited.
+          </li>
+          <li>Notifications (e-mail or in-app) for new and overdue Renewal Tasks.</li>
+          <li>Automatically move the Renewal Task to In Progress when renewal work is started.</li>
+          <li>Create a renewal opportunity or a draft renewed agreement.</li>
+          <li>Dashboards on renewal value at risk.</li>
+        </ul>
+
+        <h2>Glossary</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 210px">Term</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Service Agreement</td>
+              <td>A contract that gives a customer an ongoing service for a period of time.</td>
+            </tr>
+            <tr>
+              <td>Renewal Task</td>
+              <td>The Salesforce Task that tells someone to start the renewal of an agreement.</td>
+            </tr>
+            <tr>
+              <td>Calendar days</td>
+              <td>Every day of the week counts, including weekends and holidays.</td>
+            </tr>
+            <tr>
+              <td>Account Manager</td>
+              <td>The Salesforce user responsible for the customer relationship and for the renewal.</td>
+            </tr>
+            <tr>
+              <td>Permission set</td>
+              <td>A Salesforce feature that grants a user access to objects, fields and code.</td>
+            </tr>
+          </tbody>
+        </table>
+      </main>
+
+      <section id="document-owner">
+        <h2 class="unnumbered">Document Owner</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Enzo Fischer</td>
+              <td>Developer</td>
+              <td>enzo_fischer10@hotmail.com</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer class="doc-footer">Upcoming Renewals - Functional Documentation - v0.1</footer>
+    </div>
+
+    <script src="assets/docs.js"></script>
+  </body>
+</html>
