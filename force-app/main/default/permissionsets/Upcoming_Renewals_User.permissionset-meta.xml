@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>UpcomingRenewalsController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <description
+  >Grants access to Service Agreements and the Upcoming Renewals component. Required fields are not listed because they are always accessible to users with object access.</description>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Service_Agreement__c.Account_Manager__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Service_Agreement__c.Agreement_Value__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Service_Agreement__c.Renewal_Required__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Service_Agreement__c.Renewal_Task_Id__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Upcoming Renewals User</label>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>Service_Agreement__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <tabSettings>
+        <tab>Service_Agreement__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+</PermissionSet>
