@@ -1,8 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Renewal_Work_Status__c</fullName>
-    <description>Tracks whether renewal work on this agreement has started. Not Started by default; set to In Progress from the Upcoming Renewals component.</description>
-    <inlineHelpText>Indicates whether the renewal conversation for this agreement has begun.</inlineHelpText>
+    <description
+  >Tracks whether renewal work on this agreement has started. Not Started by default; set to In Progress from the Upcoming Renewals component.</description>
+    <inlineHelpText
+  >Indicates whether the renewal conversation for this agreement has begun.</inlineHelpText>
     <label>Renewal Work Status</label>
     <required>true</required>
     <trackHistory>false</trackHistory>
