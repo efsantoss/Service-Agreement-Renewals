@@ -1,0 +1,70 @@
+<template>
+  <lightning-card title={cardTitle} icon-name="standard:contract">
+    <div slot="actions">
+      <lightning-button-icon
+        icon-name="utility:refresh"
+        alternative-text="Refresh"
+        title="Refresh"
+        onclick={handleRefresh}
+        class="slds-m-right_x-small"
+      ></lightning-button-icon>
+      <lightning-button
+        label="Start Renewal"
+        variant="brand"
+        icon-name="utility:play"
+        disabled={isStartDisabled}
+        onclick={handleStartRenewal}
+      ></lightning-button>
+    </div>
+
+    <div class="slds-is-relative">
+      <template lwc:if={isLoading}>
+        <lightning-spinner
+          alternative-text="Loading upcoming renewals"
+          size="small"
+        ></lightning-spinner>
+      </template>
+      <template lwc:if={isSaving}>
+        <lightning-spinner
+          alternative-text="Starting renewal work"
+          size="small"
+        ></lightning-spinner>
+      </template>
+
+      <template lwc:if={errorMessage}>
+        <div
+          class="slds-p-horizontal_medium slds-text-color_error"
+          role="alert"
+          data-id="error"
+        >
+          {errorMessage}
+        </div>
+      </template>
+
+      <template lwc:if={hasRenewals}>
+        <p
+          class="slds-p-horizontal_medium slds-p-bottom_x-small slds-text-body_small slds-text-color_weak"
+        >
+          Active agreements that require renewal and end within the renewal
+          window, soonest first. {selectionLabel}.
+        </p>
+        <lightning-datatable
+          key-field="id"
+          data={renewals}
+          columns={columns}
+          onrowselection={handleRowSelection}
+          resize-column-disabled
+        ></lightning-datatable>
+      </template>
+
+      <template lwc:if={isEmpty}>
+        <div
+          class="slds-p-around_medium slds-text-align_center slds-text-color_weak"
+          data-id="empty"
+        >
+          No agreements require renewal attention right now.
+        </div>
+      </template>
+    </div>
+  </lightning-card>
+</template>
