@@ -1,58 +1,151 @@
-# Salesforce DX Project
+# Upcoming Renewals
 
-Salesforce DX is a development approach that brings source-driven development, team collaboration, and continuous integration to the Salesforce Platform. Instead of working directly in an org through a web browser, you work with metadata as source files in a local DX project, track changes in version control, and deploy through automated processes.
+A Salesforce solution that identifies Service Agreements approaching expiration, creates a Renewal Task for the responsible Account Manager, and gives the team a single screen to review upcoming renewals and mark renewal work as started.
 
-This project template gets you started with the tools and structure you need to build Salesforce applications using source control, scratch orgs, and the Salesforce CLI.
+Built for the Solution Heroes Salesforce Developer Technical Assessment.
 
-## Prerequisites
+| Requirement                              | Delivered by                                                                        |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| 1. Apex service that finds agreements    | `UpcomingRenewalsService`, `RenewalEligibility`, `ServiceAgreementSelector`         |
+| 2. Trigger that creates the Renewal Task | `ServiceAgreementTrigger` → `ServiceAgreementTriggerHandler` → `RenewalTaskService` |
+| 3. Lightning Web Component               | `upcomingRenewals` (label "Upcoming Renewals") + `UpcomingRenewalsController`       |
+| 4. Calendar-date handling                | `RenewalEligibility` (Date arithmetic) + `RenewalClock` (injectable "today")        |
+| 5. Apex tests                            | 47 Apex tests across 5 test classes, 93% coverage; 4 Jest tests for the component   |
 
-Before you start, make sure you have:
+## Documentation
 
-- **Salesforce CLI** - Download from [developer.salesforce.com/tools/salesforcecli](https://developer.salesforce.com/tools/salesforcecli). See [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for details.
-- **VS Code with Salesforce Extension Pack** - See [Installation Instructions](https://developer.salesforce.com/docs/platform/sfvscode-extensions/guide/install.html) for details. Includes the Agentforce Vibes extension.
-- **A development org** - Sign up for a free Developer Edition org [here](https://developer.salesforce.com/signup).
-- **Dev Hub enabled** (optional, required to create scratch orgs) - You can enable Dev Hub in your development org under Setup > Dev Hub.  See [Provide Developers Access to Salesforce DX Tools](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_dx_tools.htm).
+Detailed documentation lives in [`docs/`](docs/) as HTML pages with an **Export to PDF** button:
 
-## Project Structure
+- [Functional Documentation](docs/functional-documentation.html): what the solution does, business rules, assumptions.
+- [Technical Documentation](docs/technical-documentation.html): how it is built, class by class.
+- [Software Architecture Document](docs/architecture-document.html): architectural views, quality attributes and decision records (ADRs).
 
-Your DX project follows this structure:
+## How it works
 
-- **`force-app/main/default/`** - Your metadata source files live in this default package directory. You can configure additional package directories in the `sfdx-project.json` file.
-- **`config/`** - Scratch org definitions and project settings
-- **`scripts/`** - Automation scripts for common tasks
-- **`sfdx-project.json`** - Project manifest that defines package directories, namespace, API version, and other project-level settings
+1. A user, integration or data load saves a `Service_Agreement__c`.
+2. The trigger asks `RenewalTaskService` to evaluate the saved records in bulk.
+3. An agreement **requires attention** when Status is `Active`, Renewal Required is checked and the End Date is between today and today + 30 days (both inclusive).
+4. For each qualifying agreement without a Renewal Task, one Task is created:
+   - assigned to the Account Manager, or to the agreement owner when the Account Manager is empty or inactive;
+   - due 10 calendar days before the End Date, or today if that date has already passed.
+5. The Task Id is stored in `Renewal_Task_Id__c` on the agreement, so later edits never create a duplicate.
+6. The **Upcoming Renewals** component lists qualifying agreements (soonest first, then highest value) and lets users select rows and click **Start Renewal**, which sets Renewal Work Status to `In Progress`.
 
-See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
+## Architecture
 
-## Get Started
+```
+ServiceAgreementTrigger (no logic)            upcomingRenewals (LWC)
+        │                                              │
+ServiceAgreementTriggerHandler                UpcomingRenewalsController (@AuraEnabled, DTO)
+        │                                              │
+RenewalTaskService (system automation)        UpcomingRenewalsService (user mode)
+        │                                              │
+        └──── RenewalEligibility (pure rules) · RenewalSettings · RenewalClock ────┘
+                                       │
+                 ServiceAgreementSelector · RenewalTaskSelector (all SOQL)
+```
 
-Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.
+- **Thin trigger, handler, services, domain, selectors**: each class has one reason to change; SOQL lives only in selectors and DML only in services.
+- **Bulk-safe**: the trigger path uses at most 2 SOQL queries and 2 DML statements per transaction, regardless of record count.
+- **Configurable**: the 30-day window and 10-day lead time live in the `Renewal_Setting__mdt` Custom Metadata record `Default`.
+- **Secure**: UI reads and writes run `with sharing` and in `USER_MODE`; access is granted by the `Upcoming_Renewals_User` permission set. The Task automation runs in system context on purpose (see Design decisions).
 
-## Common Salesforce CLI Commands
+## Repository structure
 
-Here are common CLI commands that you'll use the most:
+```
+force-app/main/default/
+├── classes/            Apex classes and test classes
+├── triggers/           ServiceAgreementTrigger
+├── lwc/                upcomingRenewals component and Jest tests
+├── objects/            Service_Agreement__c, Renewal_Setting__mdt
+├── customMetadata/     Default renewal settings (30 / 10 days)
+├── permissionsets/     Upcoming_Renewals_User
+├── layouts/, tabs/     Service Agreement layout and tab
+scripts/apex/           Demo data seed and cleanup scripts
+docs/                   Functional, technical and architecture documentation
+```
 
-- `sf org login web`: Authorize an org
-- `sf org open`: Open your org in a browser
-- `sf org create scratch`: Create a scratch org
-- `sf project deploy start`: Deploy metadata to your org
-- `sf project retrieve start`: Retrieve metadata from your org
-- `sf template generate <artifact>`: Scaffold new components, such as Apex classes and triggers, LWC components, Lightning apps, and more
-- `sf apex <command>`: Run Apex tests, run anonymous Apex blocks, and view logs
-- `sf data <command>`: Work with test data
-- `sf alias <command>`: Manage org aliases
-- `sf config <command>`: Configure CLI settings
+## Setup
 
-## Use Agentforce Vibes to Build Lightning Apps
+### Prerequisites
 
-Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
+- [Salesforce CLI](https://developer.salesforce.com/tools/salesforcecli) (`sf`)
+- Node.js 18+ (for linting and Jest tests)
+- A Salesforce org (Developer Edition, sandbox or scratch org)
 
-## Additional Resources
+### 1. Install and authorize
 
-- [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)
-- [Salesforce CLI Installation Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/)
-- [Salesforce CLI Plugin Development Guide](https://developer.salesforce.com/docs/platform/salesforce-cli-plugin/guide/conceptual-overview.html)
-- [Salesforce VS Code Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
+```bash
+npm install
+sf org login web --alias dev
+```
 
+### 2. Validate, then deploy
+
+Validation is a check-only deployment that runs all local tests without changing the org. The quick deploy then promotes exactly what was validated.
+
+```bash
+sf project deploy validate --source-dir force-app --test-level RunLocalTests --target-org dev
+sf project deploy quick --job-id <job-id-from-validation> --target-org dev
+```
+
+### 3. Grant access
+
+```bash
+sf org assign permset --name Upcoming_Renewals_User --target-org dev
+```
+
+### 4. Load demo data (optional)
+
+Creates 10 agreements relative to today: 5 that qualify (and receive a Renewal Task) and 5 that do not.
+
+```bash
+sf apex run --file scripts/apex/seed-demo-data.apex --target-org dev
+# remove later with:
+sf apex run --file scripts/apex/delete-demo-data.apex --target-org dev
+```
+
+### 5. Add the component
+
+Setup → Lightning App Builder (or open the Home page → gear icon → **Edit Page**), drag **Upcoming Renewals** from the Custom components list onto the page, **Save** and **Activate**.
+
+## Running tests
+
+```bash
+# Apex tests with coverage
+sf apex run test --test-level RunLocalTests --code-coverage --result-format human --target-org dev
+
+# LWC Jest tests and lint
+npm run test:unit
+npm run lint
+```
+
+## Assumptions
+
+1. **Custom object.** The standard Contract and Service Contract objects make Status and End Date derived or read-only and have no Renewal Required field, so `Service_Agreement__c` is a custom object.
+2. **"Within the next 30 days"** means from today through today + 30, both inclusive. Agreements that have already ended do not qualify.
+3. **Task assignee.** The Account Manager is a User lookup. When it is empty or inactive, the Task goes to the agreement owner (and, as a last resort, to the running user), so a renewal is never dropped.
+4. **One Renewal Task per agreement.** Later edits, including End Date changes, do not create another Task.
+5. **Due date in the past.** When End Date − 10 days has already passed, the Task is due today.
+6. **"Renewal work has started"** is tracked on the agreement (`Renewal_Work_Status__c`), independent of Status, so the agreement stays visible while it is being renewed.
+7. **"Today"** follows the running user's time zone (`Date.today()`).
+8. **Sharing.** The object uses Public Read/Write, so an Account Manager who is not the owner can still see and update the agreement assigned to them.
+
+## Design decisions
+
+| Decision                                                 | Why                                                                                                                                                                                                                                                                                 |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Apex trigger instead of a Record-Triggered Flow          | Bulk duplicate detection, owner fallback and boundary-date tests are explicit and unit-testable in Apex. Declarative tools are used for the data model, validation rule, configuration and access.                                                                                  |
+| Duplicate marker on the agreement (`Renewal_Task_Id__c`) | The target org does not accept custom fields on Task or Event (verified with dry-run deployments), so a unique key on Task was not possible. The service re-reads agreements with `FOR UPDATE`, skips those with a marker, and checks existing Tasks by `WhatId` as a second layer. |
+| No static recursion flag                                 | Static "already ran" flags break bulk loads above 200 records. The service is idempotent instead: once the marker is set, later passes skip the record without spending queries.                                                                                                    |
+| `RenewalTaskService` runs `without sharing`              | It is a system automation that must see Renewal Tasks owned by other users and stamp a system-managed field even when the editing user cannot edit it. User-facing paths enforce `USER_MODE`.                                                                                       |
+| Custom Metadata for the 30 / 10 days                     | The business can tune the rules without a code release; safe defaults are used when the record is missing.                                                                                                                                                                          |
+| `RenewalClock`                                           | One source of "today", so tests pin the date and cover month, year and leap-year boundaries deterministically.                                                                                                                                                                      |
+| Own lightweight trigger handler                          | No external dependency; the layering is compatible with fflib or the Trigger Actions Framework if the org grows.                                                                                                                                                                    |
+
+## Known limitations and next steps
+
+- Agreements are evaluated when they are saved. An agreement that enters the 30-day window without being edited does not receive a Task until it is saved again; a daily Schedulable/Batchable job reusing `RenewalTaskService` would close this gap.
+- Notifications for new or overdue Renewal Tasks.
+- Synchronize the Renewal Task status when renewal work starts.
+- Pagination in the component for very large result sets (currently up to 500 rows).
