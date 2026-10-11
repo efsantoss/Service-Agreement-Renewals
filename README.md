@@ -60,7 +60,8 @@ force-app/main/default/
 ├── objects/            Service_Agreement__c, Renewal_Setting__mdt
 ├── customMetadata/     Default renewal settings (30 / 10 days)
 ├── permissionsets/     Upcoming_Renewals_User
-├── layouts/, tabs/     Service Agreement layout and tab
+├── layouts/, tabs/     Service Agreement layout and tabs
+├── flexipages/         Upcoming Renewals Lightning app page
 scripts/apex/           Demo data seed and cleanup scripts
 docs/                   Functional, technical and architecture documentation
 ```
@@ -105,9 +106,11 @@ sf apex run --file scripts/apex/seed-demo-data.apex --target-org dev
 sf apex run --file scripts/apex/delete-demo-data.apex --target-org dev
 ```
 
-### 5. Add the component
+### 5. Open the component
 
-Setup → Lightning App Builder (or open the Home page → gear icon → **Edit Page**), drag **Upcoming Renewals** from the Custom components list onto the page, **Save** and **Activate**.
+The deployment includes an **Upcoming Renewals** Lightning app page and tab. Open the App Launcher (nine dots), search for **Upcoming Renewals** and open it. To pin it, edit the app's navigation bar and add the Upcoming Renewals item.
+
+The component can also be placed on any Home, App or Record page with the Lightning App Builder (Custom components → **Upcoming Renewals**), as long as the page template has a free region.
 
 ## Running tests
 
