@@ -14,14 +14,21 @@
 
     <div class="page">
       <header class="cover">
-        <img class="cover-logo" src="assets/logo.png" alt="Company logo" onerror="this.remove()" />
+        <img
+          class="cover-logo"
+          src="assets/logo.png"
+          alt="Company logo"
+          onerror="this.remove()"
+        />
         <p class="eyebrow">Salesforce Developer Technical Assessment</p>
         <h1>Upcoming Renewals</h1>
         <p class="subtitle">Technical Documentation</p>
-        <p class="tagline">Architecture, implementation and operations of the renewal solution</p>
+        <p class="tagline">
+          Architecture, implementation and operations of the renewal solution
+        </p>
         <dl class="meta">
           <dt>Version</dt>
-          <dd>0.2 (Draft)</dd>
+          <dd>1.0</dd>
           <dt>Last modified</dt>
           <dd>Oct 11, 2026</dd>
           <dt>Audience</dt>
@@ -44,12 +51,14 @@
           </thead>
           <tbody>
             <tr>
-              <td>0.1</td>
+              <td>1.0</td>
               <td>Enzo Fischer</td>
-              <td>Oct 10, 2026</td>
+              <td>Oct 11, 2026</td>
               <td>
-                Initial draft: architecture, layering, data model, design decisions and deployment
-                approach.
+                Brought the document in line with the final code: the full class
+                list, how each path handles sharing, error handling, the
+                component and the test results (47 Apex tests, 93% coverage, 4
+                Jest tests).
               </td>
             </tr>
             <tr>
@@ -57,10 +66,20 @@
               <td>Enzo Fischer</td>
               <td>Oct 11, 2026</td>
               <td>
-                Duplicate prevention redesigned: the org does not allow custom fields on Task, so the
-                key moved to <code>Service_Agreement__c.Renewal_Task_Id__c</code>. Data model
-                reconciled with the deployed metadata. Added a companion Software Architecture
-                Document.
+                Reworked duplicate prevention after finding that this org does
+                not allow custom fields on Task. The key now lives on the
+                agreement (<code>Renewal_Task_Id__c</code>). I also matched the
+                data model to what is deployed.
+              </td>
+            </tr>
+            <tr>
+              <td>0.1</td>
+              <td>Enzo Fischer</td>
+              <td>Oct 10, 2026</td>
+              <td>
+                First draft covering the architecture, the layers, the data
+                model, the main design decisions and how the solution is
+                deployed.
               </td>
             </tr>
           </tbody>
@@ -75,17 +94,17 @@
       <main class="page-break">
         <h2>Introduction</h2>
         <p>
-          This document explains <strong>how</strong> the Upcoming Renewals solution is built: the
-          architecture, each component and its responsibility, the data model, the design decisions
-          and how to deploy and test it. The business behavior is described in the companion
+          This document explains <strong>how</strong> the Upcoming Renewals
+          solution is built: the architecture, each component and its
+          responsibility, the data model, the design decisions and how to deploy
+          and test it. The business behavior is described in the companion
           <em>Functional Documentation</em>.
         </p>
         <div class="callout">
           <p>
-            <strong>Document status.</strong> The architecture below is the agreed design. Components
-            marked <span class="badge planned">Planned</span> are being built and class names or
-            signatures may still be refined. Each section is reconciled with the final source code
-            before submission.
+            <strong>Document status.</strong> Version 1.0 describes the
+            delivered source code. Class names, queries and test results below
+            match the repository.
           </p>
         </div>
 
@@ -100,15 +119,24 @@
           <tbody>
             <tr>
               <td>Platform</td>
-              <td>Salesforce, source-driven development (SFDX project, source API version 68.0)</td>
+              <td>
+                Salesforce, source-driven development (SFDX project, source API
+                version 68.0)
+              </td>
             </tr>
             <tr>
               <td>Back end</td>
-              <td>Apex: one thin trigger, handler, service, selector and domain classes</td>
+              <td>
+                Apex: one thin trigger, handler, service, selector and domain
+                classes
+              </td>
             </tr>
             <tr>
               <td>Front end</td>
-              <td>Lightning Web Component <code>upcomingRenewals</code> with a single Apex controller</td>
+              <td>
+                Lightning Web Component <code>upcomingRenewals</code> with a
+                single Apex controller
+              </td>
             </tr>
             <tr>
               <td>Configuration</td>
@@ -116,7 +144,10 @@
             </tr>
             <tr>
               <td>Quality</td>
-              <td>Apex tests with a test data factory, LWC Jest tests, ESLint and Prettier</td>
+              <td>
+                Apex tests with a test data factory, LWC Jest tests, ESLint and
+                Prettier
+              </td>
             </tr>
           </tbody>
         </table>
@@ -124,29 +155,62 @@
         <h2>Solution Architecture</h2>
         <h3>Design principles</h3>
         <ul>
-          <li><strong>Separation of concerns.</strong> Each class has one reason to change.</li>
-          <li><strong>Bulk first.</strong> Every public method receives and returns collections.</li>
-          <li><strong>One query, one DML.</strong> SOQL lives in selectors; DML lives in services.</li>
-          <li><strong>Business rules are data.</strong> The 30-day window and the 10-day lead are configuration.</li>
-          <li><strong>Testable by design.</strong> Pure logic has no SOQL or DML, and the current date is injectable.</li>
-          <li><strong>Secure by default.</strong> <code>with sharing</code>, user-mode queries and DML.</li>
+          <li>
+            <strong>Separation of concerns.</strong> Each class has one reason
+            to change.
+          </li>
+          <li>
+            <strong>Bulk first.</strong> Every public method receives and
+            returns collections.
+          </li>
+          <li>
+            <strong>One query, one DML.</strong> SOQL lives in selectors; DML
+            lives in services.
+          </li>
+          <li>
+            <strong>Business rules are data.</strong> The 30-day window and the
+            10-day lead are configuration.
+          </li>
+          <li>
+            <strong>Testable by design.</strong> Pure logic has no SOQL or DML,
+            and the current date is injectable.
+          </li>
+          <li>
+            <strong>Secure by default.</strong> <code>with sharing</code>,
+            user-mode queries and DML.
+          </li>
         </ul>
 
         <h3>Layered view</h3>
         <div class="diagram">
-          <div class="box entry">ServiceAgreementTrigger<small>after insert, after update</small></div>
-          <div class="box entry">upcomingRenewals (LWC)<small>presentation</small></div>
+          <div class="box entry">
+            ServiceAgreementTrigger<small>after insert, after update</small>
+          </div>
+          <div class="box entry">
+            upcomingRenewals (LWC)<small>presentation</small>
+          </div>
           <div class="arrow">&#9660;</div>
           <div class="arrow">&#9660;</div>
-          <div class="box">ServiceAgreementTriggerHandler<small>routes trigger context</small></div>
-          <div class="box">UpcomingRenewalsController<small>@AuraEnabled, DTO mapping</small></div>
+          <div class="box">
+            ServiceAgreementTriggerHandler<small>routes trigger context</small>
+          </div>
+          <div class="box">
+            UpcomingRenewalsController<small>@AuraEnabled, DTO mapping</small>
+          </div>
           <div class="arrow">&#9660;</div>
           <div class="arrow">&#9660;</div>
-          <div class="box">RenewalTaskService<small>creates Tasks, prevents duplicates</small></div>
-          <div class="box">UpcomingRenewalsService<small>lists renewals, marks work started</small></div>
+          <div class="box">
+            RenewalTaskService<small>creates Tasks, prevents duplicates</small>
+          </div>
+          <div class="box">
+            UpcomingRenewalsService<small
+              >lists renewals, marks work started</small
+            >
+          </div>
           <div class="arrow wide">&#9660;</div>
           <div class="box wide">
-            RenewalEligibility (pure rule) &middot; RenewalSettings (configuration) &middot; RenewalClock (date source)
+            RenewalEligibility (pure rule) &middot; RenewalSettings
+            (configuration) &middot; RenewalClock (date source)
             <small>domain and support layer, no SOQL or DML</small>
           </div>
           <div class="arrow wide">&#9660;</div>
@@ -156,7 +220,7 @@
           </div>
         </div>
 
-        <h3>Component catalog <span class="badge planned">Planned</span></h3>
+        <h3>Component catalog</h3>
         <table>
           <thead>
             <tr>
@@ -169,61 +233,111 @@
             <tr>
               <td><code>ServiceAgreementTrigger</code></td>
               <td>Trigger</td>
-              <td>One trigger per object. Contains no logic; delegates to the handler.</td>
+              <td>
+                One trigger per object. Contains no logic; delegates to the
+                handler.
+              </td>
             </tr>
             <tr>
               <td><code>ServiceAgreementTriggerHandler</code></td>
               <td>Handler</td>
-              <td>Receives <code>Trigger.new</code> and <code>Trigger.oldMap</code>, decides what runs in each context and calls the service with whole collections.</td>
+              <td>
+                Receives <code>Trigger.new</code> and
+                <code>Trigger.oldMap</code>, decides what runs in each context
+                and calls the service with whole collections.
+              </td>
             </tr>
             <tr>
               <td><code>RenewalTaskService</code></td>
               <td>Service</td>
-              <td>Orchestrates Task creation: filters eligible agreements, finds existing Tasks, resolves the owner, builds the Tasks and inserts them in one DML.</td>
+              <td>
+                Orchestrates Task creation: filters eligible agreements, finds
+                existing Tasks, resolves the owner, builds the Tasks and inserts
+                them in one DML.
+              </td>
             </tr>
             <tr>
               <td><code>UpcomingRenewalsService</code></td>
               <td>Service</td>
-              <td>Returns the qualifying agreements for the UI and updates Renewal Work Status.</td>
+              <td>
+                Returns the qualifying agreements as DTOs (with Days Remaining)
+                and updates Renewal Work Status, both in user mode.
+              </td>
             </tr>
             <tr>
               <td><code>RenewalEligibility</code></td>
               <td>Domain</td>
-              <td>Pure functions that answer "does this agreement qualify?" and "what is the Task due date?". No database access.</td>
+              <td>
+                Pure functions that answer "does this agreement qualify?" and
+                "what is the Task due date?". No database access.
+              </td>
             </tr>
             <tr>
               <td><code>RenewalSettings</code></td>
               <td>Support</td>
-              <td>Reads <code>Renewal_Setting__mdt</code> once per transaction and falls back to safe defaults (30 and 10).</td>
+              <td>
+                Reads <code>Renewal_Setting__mdt</code> once per transaction and
+                falls back to safe defaults (30 and 10).
+              </td>
             </tr>
             <tr>
               <td><code>RenewalClock</code></td>
               <td>Support</td>
-              <td>The only place that reads the current date. Tests override it to exercise date boundaries.</td>
+              <td>
+                The only place that reads the current date. Tests override it to
+                exercise date boundaries.
+              </td>
             </tr>
             <tr>
               <td><code>ServiceAgreementSelector</code></td>
               <td>Selector</td>
               <td>
-                SOQL for agreements: the qualifying list, and a fresh re-read (with
-                <code>FOR UPDATE</code>) of the agreements being processed, including owner and
-                Account Manager data.
+                SOQL for agreements: the qualifying list, and a fresh re-read
+                (with
+                <code>FOR UPDATE</code>) of the agreements being processed,
+                including owner and Account Manager data.
               </td>
             </tr>
             <tr>
               <td><code>RenewalTaskSelector</code></td>
               <td>Selector</td>
-              <td>SOQL for existing Renewal Tasks by <code>WhatId</code> (secondary duplicate check).</td>
+              <td>
+                SOQL for existing Renewal Tasks by
+                <code>WhatId</code> (secondary duplicate check).
+              </td>
             </tr>
             <tr>
               <td><code>UpcomingRenewalsController</code></td>
               <td>Controller</td>
-              <td>The only <code>@AuraEnabled</code> entry point for the LWC. Maps to a DTO and converts exceptions to <code>AuraHandledException</code>.</td>
+              <td>
+                The only <code>@AuraEnabled</code> entry point for the LWC.
+                Delegates to the service and converts exceptions to friendly
+                <code>AuraHandledException</code> messages.
+              </td>
+            </tr>
+            <tr>
+              <td><code>UpcomingRenewalDto</code></td>
+              <td>Controller</td>
+              <td>
+                Read model sent to the browser: only the displayed fields, never
+                raw records.
+              </td>
             </tr>
             <tr>
               <td><code>RenewalTestDataFactory</code></td>
               <td>Test</td>
-              <td>Builds users, accounts and agreements for every test class.</td>
+              <td>
+                Builds users, accounts, agreements and permission set
+                assignments for every test class.
+              </td>
+            </tr>
+            <tr>
+              <td><code>scripts/apex/seed-demo-data.apex</code></td>
+              <td>Tooling</td>
+              <td>
+                Creates 10 demo agreements relative to today (5 qualifying, 5
+                not); <code>delete-demo-data.apex</code> removes them.
+              </td>
             </tr>
           </tbody>
         </table>
@@ -235,7 +349,8 @@ service-agreement-renewals/
 ├── force-app/main/default/
 │   ├── objects/
 │   │   └── Service_Agreement__c/  Object, fields, validation rule, list view
-│   ├── layouts/ and tabs/         Page layout and tab for the object
+│   ├── layouts/ and tabs/         Page layout and tabs (object and Upcoming Renewals)
+│   ├── flexipages/                Upcoming Renewals Lightning app page
 │   ├── customMetadata/            Default renewal settings record
 │   ├── classes/                   Apex classes and test classes
 │   ├── triggers/                  ServiceAgreementTrigger
@@ -243,8 +358,7 @@ service-agreement-renewals/
 │   └── permissionsets/            Access to objects, fields, classes
 ├── config/                        Scratch org definition
 ├── sfdx-project.json
-└── README.md</pre
-        >
+└── README.md</pre>
 
         <h2>Data Model</h2>
         <h3>Service_Agreement__c</h3>
@@ -265,7 +379,10 @@ service-agreement-renewals/
             <tr>
               <td><code>Account__c</code></td>
               <td>Lookup(Account)</td>
-              <td>Required. Deletion of the Account is restricted while agreements exist.</td>
+              <td>
+                Required. Deletion of the Account is restricted while agreements
+                exist.
+              </td>
             </tr>
             <tr>
               <td><code>Start_Date__c</code></td>
@@ -295,7 +412,10 @@ service-agreement-renewals/
             <tr>
               <td><code>Account_Manager__c</code></td>
               <td>Lookup(User)</td>
-              <td>Optional. Child relationship name <code>Managed_Service_Agreements</code>.</td>
+              <td>
+                Optional. Child relationship name
+                <code>Managed_Service_Agreements</code>.
+              </td>
             </tr>
             <tr>
               <td><code>Renewal_Work_Status__c</code></td>
@@ -306,31 +426,35 @@ service-agreement-renewals/
               <td><code>Renewal_Task_Id__c</code></td>
               <td>Text(18)</td>
               <td>
-                System-managed. Holds the Id of the Renewal Task created for the agreement and is the
-                primary duplicate-prevention marker.
+                System-managed. Holds the Id of the Renewal Task created for the
+                agreement and is the primary duplicate-prevention marker.
               </td>
             </tr>
           </tbody>
         </table>
         <p>
-          Validation rule <code>End_Date_After_Start_Date</code> rejects records where the End Date is
-          earlier than the Start Date. The object has <em>Allow Activities</em> enabled so Tasks can
-          reference it through <code>WhatId</code>.
+          Validation rule <code>End_Date_After_Start_Date</code> rejects records
+          where the End Date is earlier than the Start Date. The object has
+          <em>Allow Activities</em> enabled so Tasks can reference it through
+          <code>WhatId</code>.
         </p>
 
         <h3>Platform constraint: no custom fields on Task</h3>
         <div class="callout note">
           <p>
-            The original design stored a unique key on the Task. Deploying <strong>any</strong>
-            custom field to <code>Task</code> or <code>Event</code> in the target org fails with
-            <code>bad value for restricted picklist field: Task</code> (verified with dry-run
-            deployments; the same field on <code>Account</code> deploys fine). The duplicate-prevention
-            marker therefore lives on the Service Agreement as <code>Renewal_Task_Id__c</code>. The
-            Task is linked to the agreement through the standard <code>WhatId</code>.
+            The original design stored a unique key on the Task. Deploying
+            <strong>any</strong> custom field to <code>Task</code> or
+            <code>Event</code> in the target org fails with
+            <code>bad value for restricted picklist field: Task</code> (verified
+            with dry-run deployments; the same field on
+            <code>Account</code> deploys fine). The duplicate-prevention marker
+            therefore lives on the Service Agreement as
+            <code>Renewal_Task_Id__c</code>. The Task is linked to the agreement
+            through the standard <code>WhatId</code>.
           </p>
         </div>
 
-        <h3>Renewal_Setting__mdt <span class="badge planned">Planned</span></h3>
+        <h3>Renewal_Setting__mdt</h3>
         <table>
           <thead>
             <tr>
@@ -353,42 +477,91 @@ service-agreement-renewals/
           </tbody>
         </table>
 
-        <h2>Trigger Architecture <span class="badge planned">Planned</span></h2>
+        <h2>Trigger Architecture</h2>
         <h3>Principles</h3>
         <ul>
           <li>One trigger per object, no logic inside it.</li>
-          <li>Runs <strong>after insert</strong> and <strong>after update</strong>, because the Task needs the agreement Id as <code>WhatId</code>, and the agreement is updated afterwards with the Task Id.</li>
-          <li>Operates on <code>List&lt;Service_Agreement__c&gt;</code>, never on a single record.</li>
-          <li>The Task is created in the same transaction, so a failure is visible to the user who saved the agreement.</li>
+          <li>
+            Runs <strong>after insert</strong> and
+            <strong>after update</strong>, because the Task needs the agreement
+            Id as <code>WhatId</code>, and the agreement is updated afterwards
+            with the Task Id.
+          </li>
+          <li>
+            Operates on <code>List&lt;Service_Agreement__c&gt;</code>, never on
+            a single record.
+          </li>
+          <li>
+            The Task is created in the same transaction, so a failure is visible
+            to the user who saved the agreement.
+          </li>
         </ul>
 
         <h3>Execution flow</h3>
         <ol>
-          <li>The trigger passes <code>Trigger.operationType</code>, <code>Trigger.new</code> and <code>Trigger.oldMap</code> to the handler.</li>
-          <li>The handler calls <code>RenewalTaskService.createRenewalTasks(agreements)</code>.</li>
-          <li>The service keeps only agreements where <code>RenewalEligibility</code> returns true.</li>
-          <li>One query in <code>ServiceAgreementSelector</code> re-reads the current state of those agreements with <code>FOR UPDATE</code>, including the Account Manager and its active flag, and keeps only those whose <code>Renewal_Task_Id__c</code> is empty.</li>
-          <li>One query in <code>RenewalTaskSelector</code> finds Tasks that already exist for them (secondary check).</li>
+          <li>
+            The trigger passes <code>Trigger.operationType</code>,
+            <code>Trigger.new</code> and <code>Trigger.oldMap</code> to the
+            handler.
+          </li>
+          <li>
+            The handler calls
+            <code>RenewalTaskService.createRenewalTasks(agreements)</code>.
+          </li>
+          <li>
+            The service keeps only agreements where
+            <code>RenewalEligibility</code> returns true.
+          </li>
+          <li>
+            One query in <code>ServiceAgreementSelector</code> re-reads the
+            current state of those agreements with <code>FOR UPDATE</code>,
+            including the Account Manager and its active flag, and keeps only
+            those whose <code>Renewal_Task_Id__c</code> is empty.
+          </li>
+          <li>
+            One query in <code>RenewalTaskSelector</code> finds Tasks that
+            already exist for them (secondary check).
+          </li>
           <li>Tasks are built only for agreements that still have no Task.</li>
-          <li>All Tasks are inserted with a single DML using partial success.</li>
-          <li>One DML then writes the new Task Ids to <code>Renewal_Task_Id__c</code> on the agreements. The handler ignores the follow-up trigger pass, because those agreements now have a Task.</li>
+          <li>
+            All Tasks are inserted with a single DML using partial success.
+          </li>
+          <li>
+            One DML then writes the new Task Ids to
+            <code>Renewal_Task_Id__c</code> on the agreements. The handler
+            ignores the follow-up trigger pass, because those agreements now
+            have a Task.
+          </li>
         </ol>
 
         <h3>Why not a Record-Triggered Flow?</h3>
         <p>
-          A Flow can create a Task, but this requirement combines bulk duplicate detection, owner
-          fallback, configurable date rules and boundary-condition tests. Apex keeps that logic
-          explicit, unit-testable and easier to review. Declarative tools are still used where they
-          fit best: object and field metadata, the validation rule, Custom Metadata and permission
-          sets.
+          A Flow can create a Task, but this requirement combines bulk duplicate
+          detection, owner fallback, configurable date rules and
+          boundary-condition tests. Apex keeps that logic explicit,
+          unit-testable and easier to review. Declarative tools are still used
+          where they fit best: object and field metadata, the validation rule,
+          Custom Metadata and permission sets.
         </p>
 
         <h2>Date Handling</h2>
         <ul>
-          <li>All values are <code>Date</code> (not <code>Datetime</code>), so time zones cannot shift a day.</li>
-          <li>Arithmetic uses <code>Date.addDays()</code>, which is calendar-aware. No manual month or leap-year logic exists.</li>
-          <li><code>RenewalClock.today()</code> is the only source of the current date. Tests override it.</li>
-          <li>The window check is <code>today &lt;= endDate &lt;= today + windowDays</code>.</li>
+          <li>
+            All values are <code>Date</code> (not <code>Datetime</code>), so
+            time zones cannot shift a day.
+          </li>
+          <li>
+            Arithmetic uses <code>Date.addDays()</code>, which is
+            calendar-aware. No manual month or leap-year logic exists.
+          </li>
+          <li>
+            <code>RenewalClock.today()</code> is the only source of the current
+            date. Tests override it.
+          </li>
+          <li>
+            The window check is
+            <code>today &lt;= endDate &lt;= today + windowDays</code>.
+          </li>
           <li>The due date is <code>max(endDate - leadDays, today)</code>.</li>
           <li>"Days Remaining" is <code>today.daysBetween(endDate)</code>.</li>
         </ul>
@@ -459,42 +632,108 @@ service-agreement-renewals/
         <p>Duplicates are prevented in three complementary layers.</p>
         <ol>
           <li>
-            <strong>Marker on the agreement.</strong> <code>Renewal_Task_Id__c</code> is written when
-            the Task is created. An agreement with this field populated never receives another Task,
+            <strong>Marker on the agreement.</strong>
+            <code>Renewal_Task_Id__c</code> is written when the Task is created.
+            An agreement with this field populated never receives another Task,
             no matter how often it is edited.
           </li>
           <li>
-            <strong>Fresh read under lock.</strong> The service does not trust the possibly stale
-            <code>Trigger.new</code>. It re-reads the agreements with <code>FOR UPDATE</code> and
-            decides on the current database state, which serializes concurrent transactions on the
-            same agreement.
+            <strong>Fresh read under lock.</strong> The service does not trust
+            the possibly stale <code>Trigger.new</code>. It re-reads the
+            agreements with <code>FOR UPDATE</code> and decides on the current
+            database state, which serializes concurrent transactions on the same
+            agreement.
           </li>
           <li>
-            <strong>Secondary check on Tasks.</strong> One query on existing Tasks by
-            <code>WhatId</code> covers agreements whose marker was cleared or loaded without it.
+            <strong>Secondary check on Tasks.</strong> One query on existing
+            Tasks by <code>WhatId</code> covers agreements whose marker was
+            cleared or loaded without it.
           </li>
         </ol>
         <p>
-          The marker is the Task Id, so changing the End Date later does not create another Task (a
-          documented assumption). Repeated agreements in the same batch are collapsed by Id before
-          processing.
+          The marker is the Task Id, so changing the End Date later does not
+          create another Task (a documented assumption). Repeated agreements in
+          the same batch are collapsed by Id before processing.
         </p>
         <div class="callout">
           <p>
-            <strong>Trade-off.</strong> A unique constraint in the database would be the strongest
-            guarantee, but it cannot be placed on Task in this org (see <em>Platform constraint</em>).
-            The three layers above give equivalent protection in practice, at the cost of one extra
-            DML on the agreement.
+            <strong>Trade-off.</strong> A unique constraint in the database
+            would be the strongest guarantee, but it cannot be placed on Task in
+            this org (see <em>Platform constraint</em>). The three layers above
+            give equivalent protection in practice, at the cost of one extra DML
+            on the agreement.
           </p>
         </div>
 
         <h2>Security</h2>
+        <p>
+          Each path declares its access model explicitly, according to who is
+          acting.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 200px">Path</th>
+              <th style="width: 210px">Access model</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                Upcoming Renewals (controller and
+                <code>UpcomingRenewalsService</code>)
+              </td>
+              <td>
+                <code>with sharing</code>, <code>WITH USER_MODE</code> queries,
+                <code>AccessLevel.USER_MODE</code> DML
+              </td>
+              <td>
+                A person is acting: object permissions, field-level security and
+                sharing of that user are enforced. A user without access
+                receives a friendly error instead of data.
+              </td>
+            </tr>
+            <tr>
+              <td>Renewal Task automation (<code>RenewalTaskService</code>)</td>
+              <td><code>without sharing</code>, system mode</td>
+              <td>
+                The system is acting on behalf of the business whenever anyone
+                saves an agreement (including integrations). It must see Renewal
+                Tasks owned by other users and stamp the system-managed marker
+                even when the editing user cannot edit that field.
+              </td>
+            </tr>
+            <tr>
+              <td>Selectors</td>
+              <td><code>inherited sharing</code></td>
+              <td>
+                Follow the caller, so the same query class serves both paths
+                without changing their rules.
+              </td>
+            </tr>
+          </tbody>
+        </table>
         <ul>
-          <li>Classes use <code>with sharing</code>, except where a documented reason requires otherwise.</li>
-          <li>SOQL uses <code>WITH USER_MODE</code>; DML uses <code>AccessLevel.USER_MODE</code> so object permissions, field-level security and sharing are enforced.</li>
-          <li>Dynamic values are bound with bind variables. No string-built SOQL.</li>
-          <li>Access is granted by a permission set (object, field and Apex class access). Profiles are not modified.</li>
-          <li>The controller returns a DTO with only the fields the UI needs.</li>
+          <li>
+            Access is granted by the
+            <code>Upcoming_Renewals_User</code> permission set (object, fields,
+            Apex class and tab). Profiles are not modified.
+            <code>Renewal_Task_Id__c</code> is read-only in the permission set
+            and on the layout.
+          </li>
+          <li>
+            All SOQL is static with bind variables. There is no string-built
+            SOQL, so injection is not possible.
+          </li>
+          <li>
+            The controller returns <code>UpcomingRenewalDto</code> objects with
+            only the displayed fields, never raw records.
+          </li>
+          <li>
+            <code>startRenewalWork</code> ignores Ids that do not belong to
+            <code>Service_Agreement__c</code>.
+          </li>
         </ul>
 
         <h2>Error Handling</h2>
@@ -508,11 +747,21 @@ service-agreement-renewals/
           <tbody>
             <tr>
               <td>Task insert fails for some records</td>
-              <td>Partial-success DML. Successful Tasks are kept. Failures are logged with the agreement Id and reported on the originating agreement record.</td>
+              <td>
+                Partial-success DML inside the service. Failures are returned to
+                the handler, which calls <code>addError</code> on the
+                originating agreement, so the user or integration sees why.
+                Successful records follow the platform's save semantics (kept on
+                partial-success saves, rolled back with the statement on
+                all-or-none saves).
+              </td>
             </tr>
             <tr>
               <td>Task created but the agreement marker cannot be saved</td>
-              <td>Reported on the agreement with <code>addError</code>, which rolls the statement back so no Task is left without its marker.</td>
+              <td>
+                Reported on the agreement with <code>addError</code>, which
+                rolls the statement back so no Task is left without its marker.
+              </td>
             </tr>
             <tr>
               <td>Inactive or missing Account Manager</td>
@@ -520,7 +769,10 @@ service-agreement-renewals/
             </tr>
             <tr>
               <td>Controller errors</td>
-              <td>Caught and rethrown as <code>AuraHandledException</code> with a user-friendly message. The technical detail is logged.</td>
+              <td>
+                Caught and rethrown as <code>AuraHandledException</code> with a
+                user-friendly message. The technical detail is logged.
+              </td>
             </tr>
             <tr>
               <td>Missing configuration record</td>
@@ -529,7 +781,7 @@ service-agreement-renewals/
           </tbody>
         </table>
 
-        <h2>Lightning Web Component <span class="badge planned">Planned</span></h2>
+        <h2>Lightning Web Component</h2>
         <table>
           <thead>
             <tr>
@@ -548,36 +800,115 @@ service-agreement-renewals/
             </tr>
             <tr>
               <td>Data</td>
-              <td>Cacheable Apex method for reading; non-cacheable method for the update, followed by a refresh</td>
+              <td>
+                <code>@wire</code> on the cacheable
+                <code>getUpcomingRenewals</code>; imperative call to
+                <code>startRenewalWork</code>, followed by
+                <code>refreshApex</code> so the list reflects the server state
+              </td>
             </tr>
             <tr>
               <td>Table</td>
-              <td><code>lightning-datatable</code> with row selection, a Days Remaining column and record links</td>
+              <td>
+                <code>lightning-datatable</code> with row selection and links to
+                the Account and the agreement. End Date uses the
+                <code>date-local</code> type, which displays a Date without
+                time-zone conversion. Days Remaining of 10 or less is
+                highlighted.
+              </td>
             </tr>
             <tr>
               <td>Action</td>
-              <td>"Start Renewal" for the selected rows, disabled when nothing is selected</td>
+              <td>
+                "Start Renewal" for the selected rows, disabled when nothing is
+                selected. Rows already In Progress are skipped, so the action is
+                idempotent. A Refresh button reloads the list.
+              </td>
             </tr>
             <tr>
               <td>Feedback</td>
-              <td>Spinner while loading, toast on success or error, empty state when there is nothing to show</td>
+              <td>
+                Spinner while loading or saving, toast on success, warning toast
+                with per-record errors, error message when loading fails, empty
+                state when there is nothing to show
+              </td>
             </tr>
             <tr>
               <td>Accessibility</td>
-              <td>Standard Lightning base components, labels and keyboard support</td>
+              <td>
+                Standard Lightning base components, labels and keyboard support
+              </td>
             </tr>
             <tr>
               <td>Tests</td>
-              <td>Jest tests with the Apex methods mocked</td>
+              <td>
+                4 Jest tests with the Apex methods mocked: rows and urgency,
+                empty state, load error, Start Renewal with toast
+              </td>
             </tr>
           </tbody>
         </table>
 
-        <h2>Testing Strategy <span class="badge planned">Planned</span></h2>
+        <h2>Testing Strategy</h2>
         <p>
-          Tests are designed around behaviors, not coverage numbers. Each test sets up its own data
-          with <code>RenewalTestDataFactory</code> and asserts on outcomes.
+          Tests are designed around behaviors, not coverage numbers. Each test
+          sets up its own data with <code>RenewalTestDataFactory</code>, pins
+          "today" with <code>RenewalClock</code> and asserts on outcomes with a
+          message that explains the expectation.
         </p>
+        <div class="callout">
+          <p>
+            <strong>Results.</strong> 47 Apex tests in 5 test classes, all
+            passing; 93% code coverage across the solution. 4 Jest tests for the
+            component. Every deployment is validated with
+            <code>RunLocalTests</code> before it is promoted.
+          </p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 260px">Test class</th>
+              <th>Focus</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>RenewalEligibilityTest</code></td>
+              <td>
+                Pure rules without DML: criteria, window edges, month, year and
+                leap-year boundaries, configurable values.
+              </td>
+            </tr>
+            <tr>
+              <td><code>RenewalSettingsTest</code></td>
+              <td>
+                Configured values, defaults for missing or invalid
+                configuration, the deployed Default record, the clock.
+              </td>
+            </tr>
+            <tr>
+              <td><code>ServiceAgreementTriggerTest</code></td>
+              <td>
+                End-to-end through DML: Task creation, non-qualifying records,
+                duplicates, bulk, owner fallback, dates.
+              </td>
+            </tr>
+            <tr>
+              <td><code>ServiceAgreementTriggerHandlerTest</code></td>
+              <td>
+                Failure path with the Apex Stub API: a Task failure is reported
+                on the agreement.
+              </td>
+            </tr>
+            <tr>
+              <td><code>UpcomingRenewalsControllerTest</code></td>
+              <td>
+                List content and order, DTO mapping, starting renewal work,
+                security with and without the permission set.
+              </td>
+            </tr>
+          </tbody>
+        </table>
         <table>
           <thead>
             <tr>
@@ -588,50 +919,88 @@ service-agreement-renewals/
           <tbody>
             <tr>
               <td>Qualifying agreements</td>
-              <td>Active, Renewal Required, inside the window creates exactly one correct Task.</td>
+              <td>
+                Active, Renewal Required, inside the window creates exactly one
+                correct Task.
+              </td>
             </tr>
             <tr>
               <td>Non-qualifying agreements</td>
-              <td>Each criterion failing on its own: wrong Status, Renewal Required unchecked, outside window, already ended.</td>
+              <td>
+                Each criterion failing on its own: wrong Status, Renewal
+                Required unchecked, outside window, already ended.
+              </td>
             </tr>
             <tr>
               <td>Bulk</td>
-              <td>200 and more mixed records inserted and updated together; governor limits asserted.</td>
+              <td>
+                250 mixed records (200 qualifying, 50 outside the window)
+                inserted and updated together; asserts 200 Tasks, at most 3
+                queries, and no extra queries on the update.
+              </td>
             </tr>
             <tr>
               <td>Duplicate prevention</td>
-              <td>Repeated updates, same batch duplicates, pre-existing Task, marker already populated, marker cleared.</td>
+              <td>
+                Repeated edits (value, name, End Date) keep one Task; a cleared
+                marker is restored from the existing Task instead of creating a
+                second one.
+              </td>
             </tr>
             <tr>
               <td>Date boundaries</td>
-              <td>Window edges, month, year and leap-year cases from the table above.</td>
+              <td>
+                Window edges, month, year and leap-year cases from the table
+                above.
+              </td>
             </tr>
             <tr>
               <td>Owner resolution</td>
-              <td>Active Account Manager, no Account Manager, inactive Account Manager.</td>
+              <td>
+                Active Account Manager, no Account Manager, inactive Account
+                Manager.
+              </td>
             </tr>
             <tr>
               <td>Negative and security</td>
-              <td>Null End Date, no Task permission, user without field access, controller error path.</td>
+              <td>
+                Validation rule rejects an End Date before the Start Date; a
+                user without the permission set cannot read or update agreements
+                and gets a friendly error; null End Date and null records; Task
+                failure reported on the agreement.
+              </td>
             </tr>
             <tr>
               <td>Controller and service</td>
-              <td>Result mapping, ordering, marking work as started, partial failures.</td>
+              <td>
+                Only qualifying agreements returned, ordered by End Date then
+                value; DTO mapping; starting renewal work; empty selection and
+                Ids of other objects ignored.
+              </td>
             </tr>
           </tbody>
         </table>
 
         <h2>Deployment and CI/CD</h2>
         <p>
-          Source control is the source of truth. Changes are validated before they are deployed, and
-          the validated package is the one that is promoted. Target org alias: <code>dev</code>.
+          Source control is the source of truth. Changes are validated before
+          they are deployed, and the validated package is the one that is
+          promoted. Target org alias: <code>dev</code>.
         </p>
         <h3>Recommended pipeline</h3>
         <ol>
-          <li><strong>Static checks:</strong> ESLint, Prettier and LWC Jest.</li>
-          <li><strong>Validate (check-only) with tests:</strong> nothing is saved to the org.</li>
+          <li>
+            <strong>Static checks:</strong> ESLint, Prettier and LWC Jest.
+          </li>
+          <li>
+            <strong>Validate (check-only) with tests:</strong> nothing is saved
+            to the org.
+          </li>
           <li><strong>Quick deploy</strong> of the validated package.</li>
-          <li><strong>Post-deploy:</strong> assign the permission set and run a smoke test.</li>
+          <li>
+            <strong>Post-deploy:</strong> assign the permission set and run a
+            smoke test.
+          </li>
         </ol>
 
         <h3>Commands</h3>
@@ -650,13 +1019,17 @@ sf project deploy quick --job-id &lt;validation-job-id&gt; --target-org dev
 # 4. Assign access
 sf org assign permset --name Upcoming_Renewals_User --target-org dev
 
+# 5. Optional: demo data (and its cleanup)
+sf apex run --file scripts/apex/seed-demo-data.apex --target-org dev
+sf apex run --file scripts/apex/delete-demo-data.apex --target-org dev
+
 # Run Apex tests with coverage at any time
-sf apex run test --test-level RunLocalTests --code-coverage --result-format human --target-org dev</pre
-        >
+sf apex run test --test-level RunLocalTests --code-coverage --result-format human --target-org dev</pre>
         <div class="callout">
           <p>
-            Version control is handled manually by the developer. The pipeline above deploys to the
-            Salesforce org only; the Git repository is never an automated deployment target.
+            Version control is handled manually by the developer. The pipeline
+            above deploys to the Salesforce org only; the Git repository is
+            never an automated deployment target.
           </p>
         </div>
 
@@ -673,12 +1046,18 @@ sf apex run test --test-level RunLocalTests --code-coverage --result-format huma
             <tr>
               <td>Custom object <code>Service_Agreement__c</code></td>
               <td>Contract, ServiceContract</td>
-              <td>Standard objects do not allow editing Status and End Date and have no Renewal Required field.</td>
+              <td>
+                Standard objects do not allow editing Status and End Date and
+                have no Renewal Required field.
+              </td>
             </tr>
             <tr>
               <td>Account Manager as Lookup(User)</td>
               <td>Account owner, Contact, text</td>
-              <td>A Task owner must be a User, so the lookup gives the OwnerId with no conversion.</td>
+              <td>
+                A Task owner must be a User, so the lookup gives the OwnerId
+                with no conversion.
+              </td>
             </tr>
             <tr>
               <td>Owner fallback</td>
@@ -688,27 +1067,60 @@ sf apex run test --test-level RunLocalTests --code-coverage --result-format huma
             <tr>
               <td>Apex trigger, not Flow</td>
               <td>Record-Triggered Flow</td>
-              <td>Bulk duplicate detection and boundary tests are clearer and testable in Apex.</td>
+              <td>
+                Bulk duplicate detection and boundary tests are clearer and
+                testable in Apex.
+              </td>
             </tr>
             <tr>
               <td>Own lightweight handler</td>
               <td>fflib, Trigger Actions Framework</td>
-              <td>No external dependency; same layering, easy to migrate to a framework later.</td>
+              <td>
+                No external dependency; same layering, easy to migrate to a
+                framework later.
+              </td>
             </tr>
             <tr>
               <td>Marker <code>Renewal_Task_Id__c</code> on the agreement</td>
               <td>Unique key on Task; query-only check</td>
-              <td>Task does not accept custom fields in this org. The marker plus a locked re-read closes the race condition that a query alone cannot.</td>
+              <td>
+                Task does not accept custom fields in this org. The marker plus
+                a locked re-read closes the race condition that a query alone
+                cannot.
+              </td>
             </tr>
             <tr>
               <td>Renewal Work Status on the agreement</td>
               <td>Task status; both</td>
-              <td>Single source of truth on the managed record. The UI does not depend on a Task existing.</td>
+              <td>
+                Single source of truth on the managed record. The UI does not
+                depend on a Task existing.
+              </td>
             </tr>
             <tr>
               <td>Settings in Custom Metadata</td>
               <td>Hard-coded constants</td>
-              <td>Business can tune the window and lead time without a code deployment.</td>
+              <td>
+                Business can tune the window and lead time without a code
+                deployment.
+              </td>
+            </tr>
+            <tr>
+              <td>Task automation in system context</td>
+              <td>User mode everywhere</td>
+              <td>
+                The automation must work for any user or integration that saves
+                an agreement; user mode is kept for the paths where a person
+                reads or changes data.
+              </td>
+            </tr>
+            <tr>
+              <td>Idempotent service instead of a static recursion flag</td>
+              <td>Static "already ran" Boolean</td>
+              <td>
+                Static flags skip records in bulk loads above 200 (the platform
+                processes them in chunks in one transaction).
+              </td>
             </tr>
           </tbody>
         </table>
@@ -716,13 +1128,20 @@ sf apex run test --test-level RunLocalTests --code-coverage --result-format huma
         <h2>Limitations and Future Work</h2>
         <ul>
           <li>
-            Evaluation happens when an agreement is saved. An agreement that is never edited will not
-            receive a Task when it enters the 30-day window. A daily <code>Schedulable</code> and
-            <code>Batchable</code> job reusing <code>RenewalTaskService</code> closes this gap.
+            Evaluation happens when an agreement is saved. An agreement that is
+            never edited will not receive a Task when it enters the 30-day
+            window. A daily <code>Schedulable</code> and
+            <code>Batchable</code> job reusing
+            <code>RenewalTaskService</code> closes this gap.
           </li>
-          <li>Notifications (custom notification or e-mail) for new Renewal Tasks.</li>
+          <li>
+            Notifications (custom notification or e-mail) for new Renewal Tasks.
+          </li>
           <li>Synchronize the Renewal Task status with Renewal Work Status.</li>
-          <li>Index <code>End_Date__c</code> if data volume grows to large data volumes.</li>
+          <li>
+            Index <code>End_Date__c</code> if data volume grows to large data
+            volumes.
+          </li>
         </ul>
       </main>
 
@@ -746,7 +1165,9 @@ sf apex run test --test-level RunLocalTests --code-coverage --result-format huma
         </table>
       </section>
 
-      <footer class="doc-footer">Upcoming Renewals - Technical Documentation - v0.1</footer>
+      <footer class="doc-footer">
+        Upcoming Renewals - Technical Documentation - v1.0
+      </footer>
     </div>
 
     <script src="assets/docs.js"></script>

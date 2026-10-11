@@ -1,6 +1,6 @@
 /* ==========================================================================
    Upcoming Renewals - shared documentation theme (white + blue)
-   Logo watermark: place the company logo at docs/assets/logo.png
+   Logo watermark: docs/assets/logo.png (transparent background), centered on every page
    ========================================================================== */
 
 :root {
@@ -14,8 +14,8 @@
   --tint-strong: #dcebfa;
   --ok: #1b7f4b;
   --warn: #a15c00;
-  --font: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --mono: Consolas, 'Cascadia Mono', 'Courier New', monospace;
+  --font: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: Consolas, "Cascadia Mono", "Courier New", monospace;
 }
 
 * {
@@ -54,8 +54,8 @@ body {
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  background: url('logo.png') center center / 58% auto no-repeat;
-  opacity: 0.07;
+  background: url("logo.png") center center / auto 50% no-repeat;
+  opacity: 0.08;
 }
 
 .toolbar {
@@ -403,7 +403,7 @@ pre {
 }
 
 .pipeline li:not(:last-child)::after {
-  content: '\25B6';
+  content: "\25B6";
   position: absolute;
   right: -20px;
   top: 50%;
@@ -438,7 +438,7 @@ pre {
   margin: 18mm 16mm 20mm;
 
   @bottom-center {
-    content: 'Page ' counter(page);
+    content: "Page " counter(page);
     font: 10px var(--font);
     color: #5b6b7c;
   }

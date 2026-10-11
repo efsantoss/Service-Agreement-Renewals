@@ -41,4 +41,8 @@
         <tab>Service_Agreement__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <tabSettings>
+        <tab>Upcoming_Renewals</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
 </PermissionSet>
