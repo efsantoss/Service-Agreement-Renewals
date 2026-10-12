@@ -490,6 +490,13 @@ pre {
     display: table-header-group;
   }
 
+  .references a::after {
+    content: " (" attr(href) ")";
+    font-size: 8.5pt;
+    color: #5b6b7c;
+    word-break: break-all;
+  }
+
   a {
     color: inherit;
     text-decoration: none;

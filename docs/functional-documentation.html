@@ -28,7 +28,7 @@
         </p>
         <dl class="meta">
           <dt>Version</dt>
-          <dd>1.0</dd>
+          <dd>1.1</dd>
           <dt>Last modified</dt>
           <dd>Oct 11, 2026</dd>
           <dt>Audience</dt>
@@ -50,6 +50,16 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td>1.1</td>
+              <td>Enzo Fischer</td>
+              <td>Oct 11, 2026</td>
+              <td>
+                Added a References and Help section with links to the official
+                Salesforce documentation behind each rule, plus where to get
+                help.
+              </td>
+            </tr>
             <tr>
               <td>1.0</td>
               <td>Enzo Fischer</td>
@@ -781,6 +791,142 @@
             </tr>
           </tbody>
         </table>
+        <h2>References and Help</h2>
+        <p>
+          Official Salesforce documentation behind the features and rules
+          described in this document.
+        </p>
+        <div class="references">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 280px">Resource</th>
+                <th style="width: 190px">Source</th>
+                <th>How it relates to this solution</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="https://help.salesforce.com/s/articleView?id=sf.perm_sets_overview.htm&amp;type=5"
+                    target="_blank"
+                    rel="noopener"
+                    >Permission Sets</a
+                  >
+                </td>
+                <td>Salesforce Help</td>
+                <td>
+                  How access is granted. Users receive the Upcoming Renewals
+                  User permission set.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://help.salesforce.com/s/articleView?id=sf.fields_about_field_validation.htm&amp;type=5"
+                    target="_blank"
+                    rel="noopener"
+                    >Validation Rules</a
+                  >
+                </td>
+                <td>Salesforce Help</td>
+                <td>
+                  BR-08: the End Date cannot be earlier than the Start Date.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://help.salesforce.com/s/articleView?id=sf.admin_sharing.htm&amp;type=5"
+                    target="_blank"
+                    rel="noopener"
+                    >Set Your Internal Organization-Wide Sharing Defaults</a
+                  >
+                </td>
+                <td>Salesforce Help</td>
+                <td>
+                  Assumption A8: who can see and update Service Agreements.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://help.salesforce.com/s/articleView?id=sf.custommetadatatypes_overview.htm&amp;type=5"
+                    target="_blank"
+                    rel="noopener"
+                    >Custom Metadata Types</a
+                  >
+                </td>
+                <td>Salesforce Help</td>
+                <td>
+                  Where administrators change the 30-day window and the 10-day
+                  lead time.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://help.salesforce.com/s/articleView?id=sf.lightning_app_builder_overview.htm&amp;type=5"
+                    target="_blank"
+                    rel="noopener"
+                    >Lightning App Builder</a
+                  >
+                </td>
+                <td>Salesforce Help</td>
+                <td>Placing the Upcoming Renewals component on other pages.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/sforce_api_objects_task.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Task</a
+                  >
+                </td>
+                <td>Object Reference</td>
+                <td>
+                  Standard fields of the Renewal Task (Subject, Due Date,
+                  Assigned To, Related To).
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Getting help</h3>
+        <ul>
+          <li>
+            <strong>This project:</strong> start with the repository
+            <code>README.md</code> (setup, tests, assumptions), then the
+            Functional Documentation, the Technical Documentation and the
+            Software Architecture Document in <code>docs/</code>.
+          </li>
+          <li>
+            <strong>Salesforce Help:</strong>
+            <a
+              href="https://help.salesforce.com/s/"
+              target="_blank"
+              rel="noopener"
+              >help.salesforce.com</a
+            >
+            for product and administration questions.
+          </li>
+          <li>
+            <strong>Trailblazer Community:</strong>
+            <a
+              href="https://trailhead.salesforce.com/trailblazer-community/feed"
+              target="_blank"
+              rel="noopener"
+              >Trailblazer Community</a
+            >
+            for questions to other Salesforce professionals.
+          </li>
+          <li>
+            <strong>Document owner:</strong> see the contact at the end of this
+            document.
+          </li>
+        </ul>
       </main>
 
       <section id="document-owner">
@@ -804,7 +950,7 @@
       </section>
 
       <footer class="doc-footer">
-        Upcoming Renewals - Functional Documentation - v1.0
+        Upcoming Renewals - Functional Documentation - v1.1
       </footer>
     </div>
 

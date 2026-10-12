@@ -28,7 +28,7 @@
         </p>
         <dl class="meta">
           <dt>Version</dt>
-          <dd>1.0</dd>
+          <dd>1.1</dd>
           <dt>Last modified</dt>
           <dd>Oct 11, 2026</dd>
           <dt>Audience</dt>
@@ -50,6 +50,15 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td>1.1</td>
+              <td>Enzo Fischer</td>
+              <td>Oct 11, 2026</td>
+              <td>
+                Added a References and Help section that ties each decision
+                record to the official Salesforce guidance behind it.
+              </td>
+            </tr>
             <tr>
               <td>1.0</td>
               <td>Enzo Fischer</td>
@@ -1750,6 +1759,216 @@
             </tr>
           </tbody>
         </table>
+        <h2>References and Help</h2>
+        <p>
+          Official Salesforce guidance that supports the decisions in this
+          document.
+        </p>
+        <div class="references">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 280px">Resource</th>
+                <th style="width: 190px">Source</th>
+                <th>Supports</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="https://architect.salesforce.com/docs/architect/decision-guides/guide/record-triggered.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Record-Triggered Automation Decision Guide</a
+                  >
+                </td>
+                <td>Salesforce Architects</td>
+                <td>
+                  ADR-003: Apex trigger instead of a Record-Triggered Flow.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/apex_patterns_sl"
+                    target="_blank"
+                    rel="noopener"
+                    >Apex Enterprise Patterns: Service Layer</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>ADR-002: services own the use cases and the DML.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/apex_patterns_dsl"
+                    target="_blank"
+                    rel="noopener"
+                    >Apex Enterprise Patterns: Domain &amp; Selector Layers</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>ADR-002: pure domain rules and selectors for SOQL.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers_bestpract.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Trigger and Bulk Request Best Practices</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>ADR-012: one trigger per object, no recursion flags.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers_order_of_execution.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Triggers and Order of Execution</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Process view: after-save Task creation.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Execution Governors and Limits</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Governor-limit budget.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_keywords_sharing.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Use the with sharing, without sharing, and inherited
+                    sharing Keywords</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>ADR-011: access model per execution path.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_enforce_usermode.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Set an Access Mode for Database Operations</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>ADR-011 and the security view.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/langCon_apex_locking_statements.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Locking Statements</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>ADR-005: locked re-read with FOR UPDATE.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://help.salesforce.com/s/articleView?id=sf.custommetadatatypes_overview.htm&amp;type=5"
+                    target="_blank"
+                    rel="noopener"
+                    >Custom Metadata Types</a
+                  >
+                </td>
+                <td>Salesforce Help</td>
+                <td>ADR-004: business parameters as metadata.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/data_security"
+                    target="_blank"
+                    rel="noopener"
+                    >Data Security</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>Security view.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Salesforce DX Developer Guide</a
+                  >
+                </td>
+                <td>Salesforce DX Developer Guide</td>
+                <td>Deployment view: source-driven delivery.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_project_commands_unified.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >project Commands</a
+                  >
+                </td>
+                <td>Salesforce CLI Command Reference</td>
+                <td>Deployment view: validate and quick deploy.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Getting help</h3>
+        <ul>
+          <li>
+            <strong>This project:</strong> start with the repository
+            <code>README.md</code> (setup, tests, assumptions), then the
+            Functional Documentation, the Technical Documentation and the
+            Software Architecture Document in <code>docs/</code>.
+          </li>
+          <li>
+            <strong>Salesforce Help:</strong>
+            <a
+              href="https://help.salesforce.com/s/"
+              target="_blank"
+              rel="noopener"
+              >help.salesforce.com</a
+            >
+            for product and administration questions.
+          </li>
+          <li>
+            <strong>Trailblazer Community:</strong>
+            <a
+              href="https://trailhead.salesforce.com/trailblazer-community/feed"
+              target="_blank"
+              rel="noopener"
+              >Trailblazer Community</a
+            >
+            for questions to other Salesforce professionals.
+          </li>
+          <li>
+            <strong>Document owner:</strong> see the contact at the end of this
+            document.
+          </li>
+        </ul>
       </main>
 
       <section id="document-owner">
@@ -1773,7 +1992,7 @@
       </section>
 
       <footer class="doc-footer">
-        Upcoming Renewals - Software Architecture Document - v1.0
+        Upcoming Renewals - Software Architecture Document - v1.1
       </footer>
     </div>
 
