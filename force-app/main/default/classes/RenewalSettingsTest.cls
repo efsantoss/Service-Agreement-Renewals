@@ -5,6 +5,7 @@
  */
 @IsTest
 private class RenewalSettingsTest {
+  // Test method that checks the configured window and lead time are used.
   @IsTest
   static void usesConfiguredValues() {
     RenewalSettings.useOverride = true;
@@ -25,6 +26,7 @@ private class RenewalSettingsTest {
     );
   }
 
+  // Test method that checks the safe defaults are used when the record is missing.
   @IsTest
   static void fallsBackToDefaultsWhenRecordIsMissing() {
     RenewalSettings.useOverride = true;
@@ -42,6 +44,7 @@ private class RenewalSettingsTest {
     );
   }
 
+  // Test method that checks the safe defaults are used when values are blank or negative.
   @IsTest
   static void fallsBackToDefaultsWhenValuesAreInvalid() {
     RenewalSettings.useOverride = true;
@@ -62,6 +65,7 @@ private class RenewalSettingsTest {
     );
   }
 
+  // Test method that checks the deployed Default record is the one read at runtime.
   @IsTest
   static void readsTheDeployedDefaultRecord() {
     Renewal_Setting__mdt deployed = Renewal_Setting__mdt.getInstance(
@@ -84,6 +88,7 @@ private class RenewalSettingsTest {
     );
   }
 
+  // Test method that checks the rules for "today" combine the clock and the settings.
   @IsTest
   static void eligibilityForTodayUsesClockAndSettings() {
     Date pinned = Date.newInstance(2028, 2, 15);
@@ -108,6 +113,7 @@ private class RenewalSettingsTest {
     );
   }
 
+  // Test method that checks the clock returns the real date when nothing is pinned.
   @IsTest
   static void clockReturnsRealDateWhenNotPinned() {
     RenewalClock.setToday(null);

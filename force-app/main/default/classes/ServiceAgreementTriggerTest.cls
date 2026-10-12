@@ -8,15 +8,18 @@
 private class ServiceAgreementTriggerTest {
   private static final Date TODAY = Date.newInstance(2027, 1, 10);
 
+  // Method that creates the Account shared by every test in this class.
   @TestSetup
   static void setup() {
     RenewalTestDataFactory.createAccount('Acme Corporation');
   }
 
+  // Method that returns the Id of the shared test Account.
   private static Id accountId() {
     return [SELECT Id FROM Account WHERE Name = 'Acme Corporation' LIMIT 1].Id;
   }
 
+  // Method that reads the current marker of an agreement from the database.
   private static Service_Agreement__c reload(Id agreementId) {
     return [
       SELECT Id, Renewal_Task_Id__c
@@ -27,6 +30,7 @@ private class ServiceAgreementTriggerTest {
 
   // ---------- Qualifying agreements ----------
 
+  // Test method that checks a qualifying agreement gets exactly one correct Renewal Task.
   @IsTest
   static void createsRenewalTaskForQualifyingAgreement() {
     RenewalClock.setToday(TODAY);
@@ -85,6 +89,7 @@ private class ServiceAgreementTriggerTest {
     );
   }
 
+  // Test method that checks an agreement that starts qualifying on update gets its Task then.
   @IsTest
   static void createsTaskWhenAgreementStartsQualifyingOnUpdate() {
     RenewalClock.setToday(TODAY);
@@ -116,6 +121,7 @@ private class ServiceAgreementTriggerTest {
 
   // ---------- Non-qualifying agreements ----------
 
+  // Test method that checks agreements failing any single criterion get no Task and no marker.
   @IsTest
   static void doesNotCreateTasksForNonQualifyingAgreements() {
     RenewalClock.setToday(TODAY);
@@ -176,6 +182,7 @@ private class ServiceAgreementTriggerTest {
     }
   }
 
+  // Test method that checks the validation rule rejects an End Date before the Start Date.
   @IsTest
   static void rejectsEndDateBeforeStartDate() {
     Service_Agreement__c agreement = RenewalTestDataFactory.buildAgreement(
@@ -196,6 +203,7 @@ private class ServiceAgreementTriggerTest {
 
   // ---------- Duplicate prevention ----------
 
+  // Test method that checks repeated edits (value, name, End Date) never create a second Task.
   @IsTest
   static void repeatedEditsDoNotCreateDuplicateTasks() {
     RenewalClock.setToday(TODAY);
@@ -222,6 +230,7 @@ private class ServiceAgreementTriggerTest {
     );
   }
 
+  // Test method that checks a cleared marker is restored from the existing Task, not duplicated.
   @IsTest
   static void restoresMarkerInsteadOfDuplicatingTask() {
     RenewalClock.setToday(TODAY);
@@ -252,6 +261,7 @@ private class ServiceAgreementTriggerTest {
 
   // ---------- Bulk operations ----------
 
+  // Test method that checks 250 mixed records are processed with a constant number of queries.
   @IsTest
   static void handlesBulkInsertAndUpdateWithinLimits() {
     RenewalClock.setToday(TODAY);
@@ -297,6 +307,7 @@ private class ServiceAgreementTriggerTest {
 
   // ---------- Task owner ----------
 
+  // Test method that checks the owner receives the Task when there is no Account Manager.
   @IsTest
   static void assignsTaskToOwnerWhenAccountManagerIsEmpty() {
     RenewalClock.setToday(TODAY);
@@ -319,6 +330,7 @@ private class ServiceAgreementTriggerTest {
     );
   }
 
+  // Test method that checks the owner receives the Task when the Account Manager is inactive.
   @IsTest
   static void assignsTaskToOwnerWhenAccountManagerIsInactive() {
     RenewalClock.setToday(TODAY);
@@ -348,6 +360,7 @@ private class ServiceAgreementTriggerTest {
 
   // ---------- Date boundaries through the trigger ----------
 
+  // Test method that checks a Task for an agreement ending in 3 days is due today, not overdue.
   @IsTest
   static void dueDateIsTodayWhenAgreementEndsWithinLeadTime() {
     RenewalClock.setToday(TODAY);
@@ -368,6 +381,7 @@ private class ServiceAgreementTriggerTest {
     );
   }
 
+  // Test method that checks the due date across the year end, through the trigger.
   @IsTest
   static void dueDateAcrossYearBoundary() {
     RenewalClock.setToday(Date.newInstance(2026, 12, 20));
@@ -388,6 +402,7 @@ private class ServiceAgreementTriggerTest {
     );
   }
 
+  // Test method that checks the due date in a leap year, through the trigger.
   @IsTest
   static void dueDateInLeapYear() {
     RenewalClock.setToday(Date.newInstance(2028, 2, 15));

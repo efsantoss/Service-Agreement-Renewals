@@ -16,14 +16,15 @@ public with sharing class ServiceAgreementTriggerHandler {
   private final RenewalTaskService renewalTaskService;
 
   /**
-   * @description Creates the handler with the default service.
+   * Constructor that prepares the handler with the default Renewal Task service.
    */
   public ServiceAgreementTriggerHandler() {
     this(new RenewalTaskService());
   }
 
   /**
-   * @description Creates the handler with an explicit service (dependency injection).
+   * Constructor that receives the service explicitly (dependency injection), so tests can use
+   * a stub instead of the real service.
    * @param renewalTaskService Service that creates the Renewal Tasks.
    */
   public ServiceAgreementTriggerHandler(RenewalTaskService renewalTaskService) {
@@ -31,7 +32,7 @@ public with sharing class ServiceAgreementTriggerHandler {
   }
 
   /**
-   * @description Entry point called by the trigger.
+   * Method called by the trigger that decides what runs in each trigger context.
    * @param operation  The trigger context (Trigger.operationType).
    * @param newRecords The records being saved (Trigger.new).
    */
@@ -51,6 +52,8 @@ public with sharing class ServiceAgreementTriggerHandler {
     }
   }
 
+  // Method that asks the service for the Renewal Tasks and shows any failure on the agreement
+  // itself, so a renewal is never dropped silently.
   private void createRenewalTasks(List<Service_Agreement__c> records) {
     Map<Id, String> errorsByAgreementId = renewalTaskService.createRenewalTasks(
       records
@@ -58,7 +61,6 @@ public with sharing class ServiceAgreementTriggerHandler {
     if (errorsByAgreementId.isEmpty()) {
       return;
     }
-    // Surface failures on the agreement itself, so a renewal is never dropped silently.
     for (Service_Agreement__c record : records) {
       if (errorsByAgreementId.containsKey(record.Id)) {
         record.addError(

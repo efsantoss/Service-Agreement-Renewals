@@ -11,9 +11,9 @@ public class RenewalTestDataFactory {
   private static Integer userCounter = 0;
 
   /**
-   * @description Inserts an Account.
+   * Method that inserts an Account with the given name.
    * @param name Account name.
-   * @return     The inserted Account.
+   * @return The inserted Account.
    */
   public static Account createAccount(String name) {
     Account account = new Account(Name = name);
@@ -22,11 +22,11 @@ public class RenewalTestDataFactory {
   }
 
   /**
-   * @description Builds (does not insert) an agreement that qualifies for renewal attention
-   *              when its End Date is inside the window: Active and Renewal Required.
+   * Method that builds (without inserting) an agreement that qualifies for renewal attention
+   * when its End Date is inside the window: Active and Renewal Required.
    * @param accountId Parent Account.
    * @param endDate   Agreement End Date.
-   * @return          The agreement, not inserted.
+   * @return The agreement, not inserted.
    */
   public static Service_Agreement__c buildAgreement(
     Id accountId,
@@ -45,11 +45,12 @@ public class RenewalTestDataFactory {
   }
 
   /**
-   * @description Builds (does not insert) several qualifying agreements with the same End Date.
+   * Method that builds (without inserting) several qualifying agreements with the same End Date,
+   * used by the bulk tests.
    * @param accountId Parent Account.
    * @param endDate   Agreement End Date.
    * @param count     Number of agreements.
-   * @return          The agreements, not inserted.
+   * @return The agreements, not inserted.
    */
   public static List<Service_Agreement__c> buildAgreements(
     Id accountId,
@@ -66,11 +67,11 @@ public class RenewalTestDataFactory {
   }
 
   /**
-   * @description Inserts a user. Runs as the current user to avoid mixed DML errors between
-   *              setup objects (User) and regular records in the same test.
+   * Method that inserts a user with the given profile. It runs as the current user to avoid
+   * mixed DML errors between setup objects (User) and regular records in the same test.
    * @param profileName Profile name.
    * @param isActive    Whether the user is active.
-   * @return            The inserted user.
+   * @return The inserted user.
    */
   public static User createUser(String profileName, Boolean isActive) {
     Profile profile = [
@@ -101,7 +102,7 @@ public class RenewalTestDataFactory {
   }
 
   /**
-   * @description Assigns the Upcoming Renewals permission set to a user.
+   * Method that assigns the Upcoming Renewals User permission set to a user.
    * @param userId User to receive the permission set.
    */
   public static void assignPermissionSet(Id userId) {
@@ -120,9 +121,9 @@ public class RenewalTestDataFactory {
   }
 
   /**
-   * @description Reads the Renewal Tasks related to the given agreements.
+   * Method that reads the Renewal Tasks related to the given agreements, oldest first.
    * @param agreementIds Agreements to look up.
-   * @return             Renewal Tasks, oldest first.
+   * @return Renewal Tasks, oldest first.
    */
   public static List<Task> getRenewalTasks(Set<Id> agreementIds) {
     return [

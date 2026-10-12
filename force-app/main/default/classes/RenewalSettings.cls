@@ -22,8 +22,8 @@ public with sharing class RenewalSettings {
   private static Boolean useOverride = false;
 
   /**
-   * @description Number of calendar days, starting today, in which an End Date requires attention.
-   * @return      The configured window, or 30 when not configured.
+   * Method that tells how many calendar days ahead, starting today, an End Date needs attention.
+   * @return The configured window, or 30 when it is not configured.
    */
   public static Integer windowDays() {
     Renewal_Setting__mdt setting = getSetting();
@@ -31,14 +31,16 @@ public with sharing class RenewalSettings {
   }
 
   /**
-   * @description Number of calendar days before the End Date on which the Renewal Task is due.
-   * @return      The configured lead time, or 10 when not configured.
+   * Method that tells how many calendar days before the End Date the Renewal Task is due.
+   * @return The configured lead time, or 10 when it is not configured.
    */
   public static Integer taskLeadDays() {
     Renewal_Setting__mdt setting = getSetting();
     return valueOrDefault(setting?.Task_Lead_Days__c, DEFAULT_TASK_LEAD_DAYS);
   }
 
+  // Method that returns the configuration in use: the test override when set, otherwise the
+  // Default Custom Metadata record (null when it does not exist).
   private static Renewal_Setting__mdt getSetting() {
     if (useOverride) {
       return settingOverride;
@@ -46,6 +48,7 @@ public with sharing class RenewalSettings {
     return Renewal_Setting__mdt.getInstance(DEFAULT_RECORD_NAME);
   }
 
+  // Method that falls back to the default value when the configured one is blank or negative.
   private static Integer valueOrDefault(Decimal value, Integer fallback) {
     return (value == null || value < 0) ? fallback : value.intValue();
   }

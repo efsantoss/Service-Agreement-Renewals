@@ -15,14 +15,15 @@ public with sharing class UpcomingRenewalsService {
   private final ServiceAgreementSelector agreementSelector;
 
   /**
-   * @description Creates the service for the current date and configured settings.
+   * Constructor that prepares the service with today's date and the configured settings.
    */
   public UpcomingRenewalsService() {
     this(RenewalEligibility.forToday(), new ServiceAgreementSelector());
   }
 
   /**
-   * @description Creates the service with explicit collaborators (dependency injection).
+   * Constructor that receives its collaborators explicitly (dependency injection), so tests can
+   * replace any of them.
    * @param eligibility       Renewal rules to apply.
    * @param agreementSelector Data access for agreements.
    */
@@ -35,8 +36,9 @@ public with sharing class UpcomingRenewalsService {
   }
 
   /**
-   * @description Returns the agreements that require renewal attention, soonest first.
-   * @return      Read models ready for display, including days remaining.
+   * Method that returns the agreements needing renewal attention, soonest first, already shaped
+   * for the screen with the days remaining.
+   * @return Read models ready for display.
    */
   public List<UpcomingRenewalDto> getUpcomingRenewals() {
     List<UpcomingRenewalDto> renewals = new List<UpcomingRenewalDto>();
@@ -58,12 +60,11 @@ public with sharing class UpcomingRenewalsService {
   }
 
   /**
-   * @description Sets Renewal Work Status to In Progress on the selected agreements.
-   *              Partial success: valid records are saved even if others fail.
-   *              Saving the agreement also re-runs the trigger, which creates the Renewal Task
-   *              if the agreement does not have one yet.
+   * Method that marks renewal work as In Progress on the agreements the user selected.
+   * It uses partial success, so valid records are saved even if others fail. Saving the
+   * agreement also re-runs the trigger, which creates the Renewal Task if it is missing.
    * @param agreementIds Agreements selected by the user.
-   * @return             How many agreements were updated and the errors of the others.
+   * @return How many agreements were updated and the errors of the others.
    */
   public StartRenewalResult startRenewalWork(List<Id> agreementIds) {
     StartRenewalResult result = new StartRenewalResult();
@@ -105,7 +106,7 @@ public with sharing class UpcomingRenewalsService {
   }
 
   /**
-   * @description Outcome of startRenewalWork, returned to the component.
+   * Inner class that carries the outcome of startRenewalWork back to the component.
    */
   public class StartRenewalResult {
     @AuraEnabled

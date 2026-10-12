@@ -6,10 +6,10 @@
  */
 public inherited sharing class RenewalTaskSelector {
   /**
-   * @description Finds existing Renewal Tasks, identified by the agreement (WhatId) and the
-   *              Renewal Task subject prefix.
+   * Method that finds the Renewal Tasks that already exist for the given agreements, matching
+   * the agreement (WhatId) and the Renewal Task subject prefix.
    * @param agreementIds Agreements to check.
-   * @return             Map of agreement Id to the Id of its existing Renewal Task.
+   * @return Map of agreement Id to the Id of its existing Renewal Task.
    */
   public Map<Id, Id> selectRenewalTaskIdsByAgreementId(Set<Id> agreementIds) {
     Map<Id, Id> taskIdByAgreementId = new Map<Id, Id>();

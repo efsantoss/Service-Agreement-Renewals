@@ -28,7 +28,7 @@ public with sharing class UpcomingRenewalDto {
   public Boolean hasRenewalTask;
 
   /**
-   * @description Maps an agreement to the read model.
+   * Constructor that copies the displayed fields of an agreement into the read model.
    * @param agreement     Agreement read by ServiceAgreementSelector.selectRequiringAttention.
    * @param daysRemaining Calendar days until the End Date.
    */

@@ -13,6 +13,7 @@ private class RenewalEligibilityTest {
     10
   );
 
+  // Method that builds an in-memory agreement that qualifies except, possibly, for its End Date.
   private static Service_Agreement__c agreementEnding(Date endDate) {
     return new Service_Agreement__c(
       Status__c = RenewalEligibility.STATUS_ACTIVE,
@@ -23,6 +24,7 @@ private class RenewalEligibilityTest {
 
   // ---------- Qualifying agreements ----------
 
+  // Test method that checks an Active, Renewal Required agreement in the middle of the window.
   @IsTest
   static void qualifiesWhenActiveRequiredAndInsideWindow() {
     Assert.isTrue(
@@ -31,6 +33,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks an agreement ending today (first day of the window).
   @IsTest
   static void qualifiesOnFirstDayOfWindow() {
     Assert.isTrue(
@@ -39,6 +42,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks an agreement ending on day 30 (last day of the window).
   @IsTest
   static void qualifiesOnLastDayOfWindow() {
     Assert.isTrue(
@@ -49,6 +53,7 @@ private class RenewalEligibilityTest {
 
   // ---------- Non-qualifying agreements ----------
 
+  // Test method that checks an agreement ending on day 31 is outside the window.
   @IsTest
   static void doesNotQualifyOneDayAfterWindow() {
     Assert.isFalse(
@@ -57,6 +62,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks an agreement that already ended does not qualify.
   @IsTest
   static void doesNotQualifyWhenAlreadyEnded() {
     Assert.isFalse(
@@ -65,6 +71,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks Draft, Expired and Cancelled agreements do not qualify.
   @IsTest
   static void doesNotQualifyWhenStatusIsNotActive() {
     for (String status : new List<String>{ 'Draft', 'Expired', 'Cancelled' }) {
@@ -77,6 +84,7 @@ private class RenewalEligibilityTest {
     }
   }
 
+  // Test method that checks agreements without Renewal Required do not qualify.
   @IsTest
   static void doesNotQualifyWhenRenewalIsNotRequired() {
     Service_Agreement__c agreement = agreementEnding(TODAY.addDays(5));
@@ -87,6 +95,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks a missing End Date or a missing record never qualifies.
   @IsTest
   static void doesNotQualifyWithoutEndDateOrRecord() {
     Assert.isFalse(
@@ -101,6 +110,7 @@ private class RenewalEligibilityTest {
 
   // ---------- Task due date and date boundaries ----------
 
+  // Test method that checks the Task is due 10 calendar days before the End Date.
   @IsTest
   static void dueDateIsTenCalendarDaysBeforeEndDate() {
     Assert.areEqual(
@@ -110,6 +120,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks the due date across a month boundary (28-day February).
   @IsTest
   static void dueDateCrossesMonthBoundary() {
     RenewalEligibility rules = new RenewalEligibility(
@@ -124,6 +135,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks the due date across a year boundary.
   @IsTest
   static void dueDateCrossesYearBoundary() {
     RenewalEligibility rules = new RenewalEligibility(
@@ -138,6 +150,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks the due date in a leap year (29-day February).
   @IsTest
   static void dueDateHandlesLeapYear() {
     RenewalEligibility rules = new RenewalEligibility(
@@ -152,6 +165,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks the due date in a non-leap year (28-day February).
   @IsTest
   static void dueDateHandlesNonLeapYear() {
     RenewalEligibility rules = new RenewalEligibility(
@@ -166,6 +180,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks a Task is never due in the past.
   @IsTest
   static void dueDateNeverInThePast() {
     Assert.areEqual(
@@ -175,6 +190,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks the window continues correctly into the next year.
   @IsTest
   static void windowSpansYearEnd() {
     RenewalEligibility rules = new RenewalEligibility(
@@ -197,6 +213,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks Feb 29 is handled as a normal day inside the window.
   @IsTest
   static void windowIncludesLeapDay() {
     RenewalEligibility rules = new RenewalEligibility(
@@ -215,6 +232,7 @@ private class RenewalEligibilityTest {
     );
   }
 
+  // Test method that checks days remaining are counted in calendar days, leap day included.
   @IsTest
   static void daysRemainingCountsCalendarDays() {
     RenewalEligibility rules = new RenewalEligibility(
@@ -236,6 +254,7 @@ private class RenewalEligibilityTest {
 
   // ---------- Configuration ----------
 
+  // Test method that checks a different window and lead time are honored.
   @IsTest
   static void honorsConfiguredWindowAndLeadDays() {
     RenewalEligibility rules = new RenewalEligibility(TODAY, 45, 5);

@@ -10,15 +10,16 @@ public with sharing class RenewalClock {
   private static Date fixedToday;
 
   /**
-   * @description Returns the current date, or the date pinned by a test.
-   * @return      Today's date in the running user's time zone.
+   * Method that returns today's date, or the date pinned by a test when there is one.
+   * @return Today's date in the running user's time zone.
    */
   public static Date today() {
     return fixedToday != null ? fixedToday : Date.today();
   }
 
   /**
-   * @description Pins "today" to a fixed date. Test use only.
+   * Method that pins "today" to a fixed date so tests always run against the same calendar.
+   * Test use only.
    * @param value The date to return from today(); null restores the real date.
    */
   @TestVisible
