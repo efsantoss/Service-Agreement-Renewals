@@ -28,7 +28,7 @@
         </p>
         <dl class="meta">
           <dt>Version</dt>
-          <dd>1.0</dd>
+          <dd>1.1</dd>
           <dt>Last modified</dt>
           <dd>Oct 11, 2026</dd>
           <dt>Audience</dt>
@@ -50,6 +50,16 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td>1.1</td>
+              <td>Enzo Fischer</td>
+              <td>Oct 11, 2026</td>
+              <td>
+                Added a References and Help section that links every platform
+                feature used in the code to its official Salesforce
+                documentation.
+              </td>
+            </tr>
             <tr>
               <td>1.0</td>
               <td>Enzo Fischer</td>
@@ -1143,6 +1153,527 @@ sf apex run test --test-level RunLocalTests --code-coverage --result-format huma
             volumes.
           </li>
         </ul>
+        <h2>References and Help</h2>
+        <p>
+          Official Salesforce documentation for the platform features used in
+          the code. Each entry notes where it applies.
+        </p>
+        <h3>Apex</h3>
+        <div class="references">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 280px">Resource</th>
+                <th style="width: 190px">Source</th>
+                <th>Where it applies</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Apex Developer Guide</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Language reference for all classes in this solution.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Triggers</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td><code>ServiceAgreementTrigger</code>.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers_bestpract.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Trigger and Bulk Request Best Practices</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>
+                  One trigger per object, bulk processing, no recursion flags.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers_order_of_execution.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Triggers and Order of Execution</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Why the Task is created in the after context.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers_context_variables.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Trigger Context Variables</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>
+                  <code>Trigger.operationType</code> and
+                  <code>Trigger.new</code> in the handler.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Execution Governors and Limits</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Query and DML budget of the trigger path.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_keywords_sharing.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Use the with sharing, without sharing, and inherited
+                    sharing Keywords</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Access model of each class (see Security).</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_enforce_usermode.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Set an Access Mode for Database Operations</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>
+                  <code>WITH USER_MODE</code> and
+                  <code>AccessLevel.USER_MODE</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/langCon_apex_locking_statements.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Locking Statements</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>
+                  <code>FOR UPDATE</code> in
+                  <code>ServiceAgreementSelector</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_methods_system_date.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Date Class</a
+                  >
+                </td>
+                <td>Apex Reference Guide</td>
+                <td>
+                  <code>addDays</code> and <code>daysBetween</code> in
+                  <code>RenewalEligibility</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_methods_system_database.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Database Class</a
+                  >
+                </td>
+                <td>Apex Reference Guide</td>
+                <td>
+                  Partial-success <code>Database.insert</code> and
+                  <code>Database.update</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_methods_system_custom_metadata_types.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Custom Metadata Type Methods</a
+                  >
+                </td>
+                <td>Apex Reference Guide</td>
+                <td>
+                  <code>Renewal_Setting__mdt.getInstance</code> in
+                  <code>RenewalSettings</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_best_practices.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Testing Best Practices</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Overall test design.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_tools_runas.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Using the runAs Method</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td>Security tests with and without the permission set.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_testing_stub_api.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Build a Mocking Framework with the Stub API</a
+                  >
+                </td>
+                <td>Apex Developer Guide</td>
+                <td><code>ServiceAgreementTriggerHandlerTest</code>.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_class_System_Assert.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Assert Class</a
+                  >
+                </td>
+                <td>Apex Reference Guide</td>
+                <td>Assertions in every test class.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Lightning Web Components</h3>
+        <div class="references">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 280px">Resource</th>
+                <th style="width: 190px">Source</th>
+                <th>Where it applies</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/platform/lwc/guide"
+                    target="_blank"
+                    rel="noopener"
+                    >Lightning Web Components Developer Guide</a
+                  >
+                </td>
+                <td>LWC Developer Guide</td>
+                <td><code>upcomingRenewals</code>.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/platform/lwc/guide/apex.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Call Apex Methods</a
+                  >
+                </td>
+                <td>LWC Developer Guide</td>
+                <td>
+                  Wired and imperative calls to
+                  <code>UpcomingRenewalsController</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/platform/lwc/guide/apex-result-caching.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Client-Side Caching</a
+                  >
+                </td>
+                <td>LWC Developer Guide</td>
+                <td>
+                  <code>cacheable=true</code> and <code>refreshApex</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/platform/lwc/guide/use-toast.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Toast Notifications</a
+                  >
+                </td>
+                <td>LWC Developer Guide</td>
+                <td>Success, warning and error feedback.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/platform/lwc/guide/testing.html"
+                    target="_blank"
+                    rel="noopener"
+                    >Test Lightning Web Components</a
+                  >
+                </td>
+                <td>LWC Developer Guide</td>
+                <td>Jest tests of the component.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/component-library/bundle/lightning-datatable/documentation"
+                    target="_blank"
+                    rel="noopener"
+                    >lightning-datatable</a
+                  >
+                </td>
+                <td>Component Reference</td>
+                <td>
+                  Columns, <code>date-local</code> type and row selection.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Tooling and metadata</h3>
+        <div class="references">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 280px">Resource</th>
+                <th style="width: 190px">Source</th>
+                <th>Where it applies</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Salesforce DX Developer Guide</a
+                  >
+                </td>
+                <td>Salesforce DX Developer Guide</td>
+                <td>Source-driven development of this project.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_project_commands_unified.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >project Commands</a
+                  >
+                </td>
+                <td>Salesforce CLI Command Reference</td>
+                <td>
+                  <code>deploy validate</code>, <code>deploy quick</code> and
+                  <code>retrieve</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_permissionset.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >PermissionSet</a
+                  >
+                </td>
+                <td>Metadata API Developer Guide</td>
+                <td><code>Upcoming_Renewals_User</code>.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.api_meta.meta/api_meta/meta_flexipage.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >FlexiPage</a
+                  >
+                </td>
+                <td>Metadata API Developer Guide</td>
+                <td>The Upcoming Renewals app page.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/sforce_api_objects_task.htm"
+                    target="_blank"
+                    rel="noopener"
+                    >Task</a
+                  >
+                </td>
+                <td>Object Reference</td>
+                <td>Fields set on the Renewal Task.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Learning paths</h3>
+        <div class="references">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 280px">Resource</th>
+                <th style="width: 190px">Source</th>
+                <th>Why it is useful</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/apex_triggers"
+                    target="_blank"
+                    rel="noopener"
+                    >Apex Triggers</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>Trigger fundamentals and bulk patterns.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/apex_testing"
+                    target="_blank"
+                    rel="noopener"
+                    >Apex Unit Testing</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>Test data, assertions and coverage.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/lightning-web-components-basics"
+                    target="_blank"
+                    rel="noopener"
+                    >Lightning Web Components Basics</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>Component structure and deployment.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/lightning-web-components-and-salesforce-data"
+                    target="_blank"
+                    rel="noopener"
+                    >Lightning Web Components and Salesforce Data</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>Calling Apex and refreshing data.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/custom_metadata_types_dec"
+                    target="_blank"
+                    rel="noopener"
+                    >Custom Metadata Types</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>Configurable business parameters.</td>
+              </tr>
+              <tr>
+                <td>
+                  <a
+                    href="https://trailhead.salesforce.com/content/learn/modules/data_security"
+                    target="_blank"
+                    rel="noopener"
+                    >Data Security</a
+                  >
+                </td>
+                <td>Trailhead</td>
+                <td>Object, field and record access.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Getting help</h3>
+        <ul>
+          <li>
+            <strong>This project:</strong> start with the repository
+            <code>README.md</code> (setup, tests, assumptions), then the
+            Functional Documentation, the Technical Documentation and the
+            Software Architecture Document in <code>docs/</code>.
+          </li>
+          <li>
+            <strong>Salesforce Help:</strong>
+            <a
+              href="https://help.salesforce.com/s/"
+              target="_blank"
+              rel="noopener"
+              >help.salesforce.com</a
+            >
+            for product and administration questions.
+          </li>
+          <li>
+            <strong>Trailblazer Community:</strong>
+            <a
+              href="https://trailhead.salesforce.com/trailblazer-community/feed"
+              target="_blank"
+              rel="noopener"
+              >Trailblazer Community</a
+            >
+            for questions to other Salesforce professionals.
+          </li>
+          <li>
+            <strong>Document owner:</strong> see the contact at the end of this
+            document.
+          </li>
+        </ul>
       </main>
 
       <section id="document-owner">
@@ -1166,7 +1697,7 @@ sf apex run test --test-level RunLocalTests --code-coverage --result-format huma
       </section>
 
       <footer class="doc-footer">
-        Upcoming Renewals - Technical Documentation - v1.0
+        Upcoming Renewals - Technical Documentation - v1.1
       </footer>
     </div>
 
