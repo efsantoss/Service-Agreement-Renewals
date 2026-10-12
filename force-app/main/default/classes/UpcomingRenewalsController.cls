@@ -11,9 +11,9 @@ public with sharing class UpcomingRenewalsController {
   private static final String START_ERROR = 'Renewal work could not be started. Please try again or contact your administrator.';
 
   /**
-   * @description Agreements that require renewal attention, for display.
-   *              Cacheable: the component refreshes it after starting renewal work.
-   * @return      Upcoming renewals visible to the current user.
+   * Method that gives the component the agreements needing renewal attention. It is cacheable,
+   * and the component refreshes it after starting renewal work.
+   * @return Upcoming renewals visible to the current user.
    */
   @AuraEnabled(cacheable=true)
   public static List<UpcomingRenewalDto> getUpcomingRenewals() {
@@ -25,9 +25,9 @@ public with sharing class UpcomingRenewalsController {
   }
 
   /**
-   * @description Marks renewal work as started on the selected agreements.
+   * Method that marks renewal work as started on the agreements selected in the component.
    * @param agreementIds Agreements selected in the component.
-   * @return             Number of updated agreements and any per-record errors.
+   * @return Number of updated agreements and any per-record errors.
    */
   @AuraEnabled
   public static UpcomingRenewalsService.StartRenewalResult startRenewalWork(
@@ -40,6 +40,8 @@ public with sharing class UpcomingRenewalsController {
     }
   }
 
+  // Method that logs the technical detail of an error and returns a friendly exception for
+  // the user, so internal details never reach the screen.
   private static AuraHandledException buildAuraException(
     String message,
     Exception cause

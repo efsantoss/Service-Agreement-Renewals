@@ -8,12 +8,12 @@
  */
 public inherited sharing class ServiceAgreementSelector {
   /**
-   * @description Agreements that require renewal attention, for display to the current user.
-   *              Ordered by the soonest End Date, then by the highest value.
+   * Method that loads the agreements needing renewal attention for the screen, in user mode,
+   * ordered by the soonest End Date and then by the highest value.
    * @param windowStart First End Date included (today).
    * @param windowEnd   Last End Date included (today + window).
    * @param maxRows     Maximum number of rows to return.
-   * @return            Qualifying agreements visible to the current user.
+   * @return Qualifying agreements visible to the current user.
    */
   public List<Service_Agreement__c> selectRequiringAttention(
     Date windowStart,
@@ -45,12 +45,12 @@ public inherited sharing class ServiceAgreementSelector {
   }
 
   /**
-   * @description Fresh read of agreements for the renewal Task automation, locking the rows
-   *              (FOR UPDATE) so two transactions cannot decide on the same agreement at the
-   *              same time. Values in Trigger.new may be stale, so decisions use this read.
-   *              Note: SOQL with FOR UPDATE cannot use ORDER BY.
+   * Method that re-reads the agreements for the renewal Task automation and locks the rows
+   * (FOR UPDATE), so two transactions cannot decide on the same agreement at the same time.
+   * Values in Trigger.new may be stale, so decisions use this fresh read.
+   * Note: SOQL with FOR UPDATE cannot use ORDER BY.
    * @param agreementIds Agreements to read.
-   * @return             Current state of the agreements, including owner and Account Manager.
+   * @return Current state of the agreements, including owner and Account Manager.
    */
   public List<Service_Agreement__c> selectByIdForUpdate(Set<Id> agreementIds) {
     return [

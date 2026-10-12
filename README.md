@@ -10,7 +10,7 @@ Built for the Solution Heroes Salesforce Developer Technical Assessment.
 | 2. Trigger that creates the Renewal Task | `ServiceAgreementTrigger` → `ServiceAgreementTriggerHandler` → `RenewalTaskService` |
 | 3. Lightning Web Component               | `upcomingRenewals` (label "Upcoming Renewals") + `UpcomingRenewalsController`       |
 | 4. Calendar-date handling                | `RenewalEligibility` (Date arithmetic) + `RenewalClock` (injectable "today")        |
-| 5. Apex tests                            | 47 Apex tests across 5 test classes, 93% coverage; 4 Jest tests for the component   |
+| 5. Apex tests                            | 45 Apex tests across 5 test classes, 95% coverage; 4 Jest tests for the component   |
 
 ## Documentation
 

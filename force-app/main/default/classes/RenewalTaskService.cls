@@ -33,7 +33,7 @@ public without sharing class RenewalTaskService {
   private final RenewalTaskSelector taskSelector;
 
   /**
-   * @description Creates the service for the current date and configured settings.
+   * Constructor that prepares the service with today's date and the configured settings.
    */
   public RenewalTaskService() {
     this(
@@ -44,7 +44,8 @@ public without sharing class RenewalTaskService {
   }
 
   /**
-   * @description Creates the service with explicit collaborators (dependency injection).
+   * Constructor that receives its collaborators explicitly (dependency injection), so tests can
+   * replace any of them.
    * @param eligibility       Renewal rules to apply.
    * @param agreementSelector Data access for agreements.
    * @param taskSelector      Data access for existing Renewal Tasks.
@@ -60,11 +61,11 @@ public without sharing class RenewalTaskService {
   }
 
   /**
-   * @description Creates one Renewal Task for every agreement that requires attention and does
-   *              not have one yet. Bulk-safe: works the same for 1 or 200 records.
+   * Method that creates one Renewal Task for every agreement that needs renewal attention and
+   * does not have one yet. Bulk-safe: it works the same way for 1 or 200 records.
    * @param agreements Agreements that were inserted or updated.
-   * @return           Error message by agreement Id for agreements whose Task could not be
-   *                   created or recorded. Empty when everything succeeded.
+   * @return Error message by agreement Id for agreements whose Task could not be created or
+   *         recorded. Empty when everything succeeded.
    */
   public Map<Id, String> createRenewalTasks(
     List<Service_Agreement__c> agreements
@@ -144,12 +145,12 @@ public without sharing class RenewalTaskService {
   }
 
   /**
-   * @description Chooses who receives the Renewal Task: the Account Manager when set and
-   *              active; otherwise the agreement owner when it is an active user; otherwise the
-   *              running user. Salesforce rejects Tasks assigned to inactive users, so this
-   *              chain guarantees that a renewal is never dropped.
+   * Method that chooses who receives the Renewal Task: the Account Manager when set and active;
+   * otherwise the agreement owner when it is an active user; otherwise the running user.
+   * Salesforce rejects Tasks assigned to inactive users, so this chain guarantees that a
+   * renewal is never dropped.
    * @param agreement Agreement read by ServiceAgreementSelector.selectByIdForUpdate.
-   * @return          Id of the user who will own the Task.
+   * @return Id of the user who will own the Task.
    */
   @TestVisible
   private static Id resolveTaskOwnerId(Service_Agreement__c agreement) {
@@ -168,6 +169,8 @@ public without sharing class RenewalTaskService {
     return UserInfo.getUserId();
   }
 
+  // Method that keeps only the saved agreements worth a closer look: they have an Id, no marker
+  // yet, and qualify by the renewal rules. It runs in memory, without any query.
   private Set<Id> selectCandidateIds(List<Service_Agreement__c> agreements) {
     Set<Id> candidateIds = new Set<Id>();
     for (Service_Agreement__c agreement : agreements) {
@@ -182,6 +185,8 @@ public without sharing class RenewalTaskService {
     return candidateIds;
   }
 
+  // Method that builds the Renewal Task for one agreement: subject, related record, owner,
+  // due date, status, priority and a short description for the Account Manager.
   private Task buildTask(Service_Agreement__c agreement) {
     return new Task(
       Subject = (SUBJECT_PREFIX + agreement.Name).left(255),
@@ -198,6 +203,7 @@ public without sharing class RenewalTaskService {
     );
   }
 
+  // Method that builds the agreement update that stores the Renewal Task Id (the marker).
   private static Service_Agreement__c buildMarker(Id agreementId, Id taskId) {
     return new Service_Agreement__c(
       Id = agreementId,
@@ -205,6 +211,7 @@ public without sharing class RenewalTaskService {
     );
   }
 
+  // Method that extracts a readable message from a failed save result.
   private static String firstErrorMessage(Database.SaveResult result) {
     List<Database.Error> errors = result.getErrors();
     return errors.isEmpty() ? 'Unknown error.' : errors[0].getMessage();

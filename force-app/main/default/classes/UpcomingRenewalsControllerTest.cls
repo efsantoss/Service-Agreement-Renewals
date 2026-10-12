@@ -8,6 +8,7 @@
 private class UpcomingRenewalsControllerTest {
   private static final Date TODAY = Date.newInstance(2027, 1, 10);
 
+  // Method that creates five agreements: three that qualify (in a known order) and two that do not.
   @TestSetup
   static void setup() {
     RenewalClock.setToday(TODAY);
@@ -53,6 +54,7 @@ private class UpcomingRenewalsControllerTest {
 
   // ---------- Listing ----------
 
+  // Test method that checks only qualifying agreements are listed, soonest first, then by value.
   @IsTest
   static void returnsOnlyQualifyingAgreementsInPriorityOrder() {
     RenewalClock.setToday(TODAY);
@@ -83,6 +85,7 @@ private class UpcomingRenewalsControllerTest {
     );
   }
 
+  // Test method that checks every displayed field is mapped correctly into the DTO.
   @IsTest
   static void mapsDisplayFields() {
     RenewalClock.setToday(TODAY);
@@ -116,6 +119,7 @@ private class UpcomingRenewalsControllerTest {
 
   // ---------- Starting renewal work ----------
 
+  // Test method that checks starting renewal work moves the selected agreements to In Progress.
   @IsTest
   static void startsRenewalWorkOnSelectedAgreements() {
     RenewalClock.setToday(TODAY);
@@ -154,6 +158,7 @@ private class UpcomingRenewalsControllerTest {
     }
   }
 
+  // Test method that checks an empty selection and Ids of other objects change nothing.
   @IsTest
   static void ignoresEmptySelectionAndForeignIds() {
     Test.startTest();
@@ -184,6 +189,7 @@ private class UpcomingRenewalsControllerTest {
 
   // ---------- Security ----------
 
+  // Test method that checks a user with the permission set can see the list and start renewals.
   @IsTest
   static void userWithPermissionSetCanReviewAndStartRenewals() {
     RenewalClock.setToday(TODAY);
@@ -216,6 +222,7 @@ private class UpcomingRenewalsControllerTest {
     );
   }
 
+  // Test method that checks a user without the permission set gets a friendly error, not data.
   @IsTest
   static void userWithoutPermissionSetGetsFriendlyError() {
     RenewalClock.setToday(TODAY);
@@ -242,6 +249,7 @@ private class UpcomingRenewalsControllerTest {
     );
   }
 
+  // Test method that checks a user without the permission set cannot change any agreement.
   @IsTest
   static void userWithoutPermissionSetCannotStartRenewalWork() {
     RenewalClock.setToday(TODAY);

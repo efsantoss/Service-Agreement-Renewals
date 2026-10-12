@@ -69,6 +69,7 @@ export default class UpcomingRenewals extends LightningElement {
 
   wiredRenewalsResult;
 
+  // Wire handler that receives the upcoming renewals from Apex (or the error) and prepares the rows.
   @wire(getUpcomingRenewals)
   wiredRenewals(result) {
     this.wiredRenewalsResult = result;
@@ -84,24 +85,29 @@ export default class UpcomingRenewals extends LightningElement {
     }
   }
 
+  // Getter that tells if there is at least one renewal to show.
   get hasRenewals() {
     return this.renewals.length > 0;
   }
 
+  // Getter that tells if the empty state should be shown (loaded, no error, no rows).
   get isEmpty() {
     return !this.isLoading && !this.errorMessage && this.renewals.length === 0;
   }
 
+  // Getter that keeps the Start Renewal button disabled while nothing is selected or a save is running.
   get isStartDisabled() {
     return this.selectedIds.length === 0 || this.isSaving;
   }
 
+  // Getter that builds the card title, with the number of renewals when there are any.
   get cardTitle() {
     return this.hasRenewals
       ? `Upcoming Renewals (${this.renewals.length})`
       : "Upcoming Renewals";
   }
 
+  // Getter that builds the "N agreements selected" text.
   get selectionLabel() {
     const count = this.selectedIds.length;
     return count === 1
@@ -109,10 +115,12 @@ export default class UpcomingRenewals extends LightningElement {
       : `${count} agreements selected`;
   }
 
+  // Handler that keeps the Ids of the rows the user selected in the table.
   handleRowSelection(event) {
     this.selectedIds = event.detail.selectedRows.map((row) => row.id);
   }
 
+  // Handler that reloads the list from the server when the user clicks Refresh.
   async handleRefresh() {
     this.isLoading = true;
     try {
@@ -122,6 +130,7 @@ export default class UpcomingRenewals extends LightningElement {
     }
   }
 
+  // Handler that starts renewal work for the selected rows, then refreshes the list.
   async handleStartRenewal() {
     // Rows already in progress are skipped so the action is idempotent.
     const idsToStart = this.renewals
@@ -162,6 +171,7 @@ export default class UpcomingRenewals extends LightningElement {
     }
   }
 
+  // Method that shows a success toast and, when needed, a warning toast with the failed records.
   notifyResult(result) {
     const { successCount, errors } = result;
     if (successCount > 0) {
@@ -181,6 +191,7 @@ export default class UpcomingRenewals extends LightningElement {
     }
   }
 
+  // Method that turns one DTO into a table row, adding the record links and the urgency style.
   toRow(renewal) {
     const isUrgent = renewal.daysRemaining <= URGENT_DAYS;
     return {
@@ -193,6 +204,7 @@ export default class UpcomingRenewals extends LightningElement {
     };
   }
 
+  // Method that extracts a readable message from any Apex or JavaScript error.
   reduceError(error) {
     if (Array.isArray(error?.body)) {
       return error.body.map((item) => item.message).join(", ");
@@ -200,6 +212,7 @@ export default class UpcomingRenewals extends LightningElement {
     return error?.body?.message || error?.message || "Unexpected error.";
   }
 
+  // Method that shows a standard Lightning toast message.
   showToast(title, message, variant) {
     this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
   }

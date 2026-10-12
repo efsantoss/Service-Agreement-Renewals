@@ -9,12 +9,11 @@
 private class ServiceAgreementTriggerHandlerTest {
   private static final String SIMULATED_ERROR = 'Simulated failure';
 
-  /**
-   * @description Stub that reports every received agreement as failed.
-   */
+  // Inner class that plays the role of a RenewalTaskService that fails for every agreement.
   private class FailingRenewalTaskService implements System.StubProvider {
     public Integer callCount = 0;
 
+    // Method that answers every stubbed call with a failure for each received agreement.
     public Object handleMethodCall(
       Object stubbedObject,
       String stubbedMethodName,
@@ -34,6 +33,7 @@ private class ServiceAgreementTriggerHandlerTest {
     }
   }
 
+  // Method that builds an in-memory agreement with a valid-looking fake Id (no DML needed).
   private static Service_Agreement__c agreementWithFakeId(Integer index) {
     String keyPrefix = Service_Agreement__c.SObjectType.getDescribe()
       .getKeyPrefix();
@@ -42,6 +42,7 @@ private class ServiceAgreementTriggerHandlerTest {
     );
   }
 
+  // Test method that checks a Task failure is reported as an error on the agreement.
   @IsTest
   static void reportsTaskFailuresOnTheAgreement() {
     FailingRenewalTaskService provider = new FailingRenewalTaskService();
@@ -69,6 +70,7 @@ private class ServiceAgreementTriggerHandlerTest {
     );
   }
 
+  // Test method that checks the service is not called in contexts without renewal logic.
   @IsTest
   static void ignoresContextsWithoutRenewalLogic() {
     FailingRenewalTaskService provider = new FailingRenewalTaskService();
